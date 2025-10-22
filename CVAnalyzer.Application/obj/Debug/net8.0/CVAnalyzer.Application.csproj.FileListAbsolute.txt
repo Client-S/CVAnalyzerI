@@ -1,0 +1,12 @@
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\bin\Debug\net8.0\CVAnalyzer.Application.deps.json
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\bin\Debug\net8.0\CVAnalyzer.Application.dll
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\bin\Debug\net8.0\CVAnalyzer.Application.pdb
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\obj\Debug\net8.0\CVAnalyzer.Application.csproj.AssemblyReference.cache
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\obj\Debug\net8.0\CVAnalyzer.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\obj\Debug\net8.0\CVAnalyzer.Application.AssemblyInfoInputs.cache
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\obj\Debug\net8.0\CVAnalyzer.Application.AssemblyInfo.cs
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\obj\Debug\net8.0\CVAnalyzer.Application.csproj.CoreCompileInputs.cache
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\obj\Debug\net8.0\CVAnalyzer.Application.dll
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\obj\Debug\net8.0\refint\CVAnalyzer.Application.dll
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\obj\Debug\net8.0\CVAnalyzer.Application.pdb
+C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Application\obj\Debug\net8.0\ref\CVAnalyzer.Application.dll

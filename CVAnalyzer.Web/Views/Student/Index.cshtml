@@ -1,0 +1,144 @@
+﻿@model IEnumerable<CVAnalyzer.Application.DTOs.Student.StudentDto>
+
+@{
+    ViewData["Title"] = "Students";
+}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-users"></i> Students</h2>
+        <p class="text-muted">@Model.Count() students registered</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Add Student
+            </a>
+            <a asp-controller="CV" asp-action="Upload" class="btn btn-success">
+                <i class="fas fa-upload"></i> Upload CV
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form asp-action="Search" method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" name="searchTerm" class="form-control"
+                       placeholder="Search by Student ID, Name, or Email..."
+                       value="@ViewBag.SearchTerm" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="studentsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Skills</th>
+                        <th>Experience</th>
+                        <th>CVs</th>
+                        <th>Created</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in Model)
+                    {
+                        <tr>
+                            <td><strong>@student.StudentId</strong></td>
+                            <td>@student.Name</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(student.Email))
+                                {
+                                    <a href="mailto:@student.Email">@student.Email</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">@student.Skills.Count</span>
+                                @if (student.Skills.Any())
+                                {
+                                    <br />
+                                    <small class="text-muted">
+                                        @string.Join(", ", student.Skills.Take(3))
+                                        @if (student.Skills.Count > 3)
+                                        {
+                                            <text>...</text>
+                                        }
+                                    </small>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-info">@student.Experiences.Count</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">@student.CVCount</span>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    @student.CreatedDate.ToString("MMM dd, yyyy")
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Details" asp-route-id="@student.Id"
+                                       class="btn btn-outline-info" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@student.Id"
+                                       class="btn btn-outline-primary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <form method="post" asp-action="Delete" asp-route-id="@student.Id"
+                                              class="d-inline" onsubmit="return confirm('Delete this student and all their data?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/lib/datatables/css/jquery.dataTables.min.css" />
+    <script src="~/lib/datatables/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#studentsTable').DataTable({
+                responsive: true,
+                order: [[0, 'asc']],
+                pageLength: 25,
+                language: {
+                    search: "Filter:",
+                    lengthMenu: "Show _MENU_ students per page"
+                }
+            });
+        });
+    </script>
+}

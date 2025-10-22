@@ -1,0 +1,94 @@
+﻿@{
+    ViewData["Title"] = "Authentication Test";
+}
+
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h3><i class="fas fa-shield-alt"></i> Authentication Test Results</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tr>
+                    <th width="200">Is Authenticated:</th>
+                    <td>
+                        @if (ViewBag.IsAuthenticated)
+                        {
+                            <span class="badge bg-success fs-6">✓ YES</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger fs-6">✗ NO</span>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    <th>User ID:</th>
+                    <td>
+                        <code>@ViewBag.UserId</code>
+                        @if (ViewBag.UserId != "Not Found")
+                        {
+                            <span class="badge bg-success ms-2">✓ Found</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger ms-2">✗ Not Found</span>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    <th>User Name:</th>
+                    <td><code>@ViewBag.UserName</code></td>
+                </tr>
+                <tr>
+                    <th>Email:</th>
+                    <td><code>@ViewBag.Email</code></td>
+                </tr>
+            </table>
+
+            <h5 class="mt-4">All Claims (@ViewBag.Claims.Count):</h5>
+            @if (ViewBag.Claims.Count > 0)
+            {
+                <div class="alert alert-success">
+                    <strong>✓ Claims Found!</strong> Authentication is working.
+                </div>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Claim</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < ViewBag.Claims.Count; i++)
+                        {
+                            <tr>
+                                <td>@(i + 1)</td>
+                                <td><code>@ViewBag.Claims[i]</code></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-danger">
+                    <strong>✗ No Claims Found!</strong> Authentication is NOT working properly.
+                    <hr />
+                    <strong>Fix:</strong>
+                    <ol>
+                        <li>Logout completely</li>
+                        <li>Close all browser windows</li>
+                        <li>Login again</li>
+                        <li>Test again</li>
+                    </ol>
+                </div>
+            }
+
+            <div class="mt-4">
+                <a href="/" class="btn btn-primary">← Back to Dashboard</a>
+                <a href="/Account/Logout" class="btn btn-secondary">Logout and Re-login</a>
+            </div>
+        </div>
+    </div>
+</div>

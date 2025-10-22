@@ -1,0 +1,180 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+        <p class="text-muted">Welcome back, @User.Identity?.Name!</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase">Total Students</h6>
+                        <h2 class="mb-0" id="totalStudents">0</h2>
+                    </div>
+                    <div class="fa-3x opacity-50">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top border-white">
+                <a href="/Student" class="text-white text-decoration-none">
+                    View Details <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase">CVs Processed</h6>
+                        <h2 class="mb-0" id="cvsProcessed">0</h2>
+                    </div>
+                    <div class="fa-3x opacity-50">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top border-white">
+                <a href="/CV/Upload" class="text-white text-decoration-none">
+                    Upload New <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase">Skills Identified</h6>
+                        <h2 class="mb-0" id="skillsIdentified">0</h2>
+                    </div>
+                    <div class="fa-3x opacity-50">
+                        <i class="fas fa-code"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top border-white">
+                <a href="/Student" class="text-white text-decoration-none">
+                    View All <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase">Clusters Created</h6>
+                        <h2 class="mb-0" id="clustersCreated">0</h2>
+                    </div>
+                    <div class="fa-3x opacity-50">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top border-white">
+                <a href="/Cluster" class="text-white text-decoration-none">
+                    View Clusters <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="recentActivityTable">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Student</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Top Skills</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="skillsChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-tasks"></i> Quick Actions</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="/CV/Upload" class="list-group-item list-group-item-action">
+                    <i class="fas fa-upload text-primary"></i> Upload Single CV
+                </a>
+                <a href="/CV/BulkUpload" class="list-group-item list-group-item-action">
+                    <i class="fas fa-file-upload text-success"></i> Bulk Upload CVs
+                </a>
+                <a href="/Student" class="list-group-item list-group-item-action">
+                    <i class="fas fa-search text-info"></i> Search Students
+                </a>
+                <a href="/Report/Export" class="list-group-item list-group-item-action">
+                    <i class="fas fa-file-excel text-success"></i> Export to Excel
+                </a>
+                <a href="/Cluster/Create" class="list-group-item list-group-item-action">
+                    <i class="fas fa-plus-circle text-warning"></i> Create New Cluster
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-bell"></i> Notifications</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush" id="notificationsList">
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p class="mb-0">No new notifications</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/dashboard.js"></script>
+}

@@ -1,0 +1,153 @@
+﻿@model CVAnalyzer.Application.DTOs.CV.BulkUploadResultDto
+
+@{
+    ViewData["Title"] = "Bulk Upload Results";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <h2><i class="fas fa-check-circle text-success"></i> Bulk Upload Results</h2>
+        <hr />
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5>Total Files</h5>
+                <h2>@Model.TotalFiles</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5>Successful</h5>
+                <h2>@Model.SuccessCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <h5>Failed</h5>
+                <h2>@Model.FailureCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h5>Processing Time</h5>
+                <h2>@Model.ProcessingTime.TotalSeconds.ToString("F2")s</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Detailed Results</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>File Name</th>
+                        <th>Status</th>
+                        <th>Student</th>
+                        <th>Skills Extracted</th>
+                        <th>Experiences</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var result in Model.Results)
+                    {
+                        <tr>
+                            <td>
+                                <i class="fas fa-file-pdf text-danger"></i> @result.FileName
+                            </td>
+                            <td>
+                                @if (result.Success)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> Success
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times"></i> Failed
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (result.Success)
+                                {
+                                    <a asp-controller="Student" asp-action="Details" asp-route-id="@result.StudentId">
+                                        @result.StudentName
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td>
+                            <td>
+                                @if (result.Success)
+                                {
+                                    <span class="badge bg-info">@result.ExtractedSkills.Count</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (result.Success)
+                                {
+                                    <span class="badge bg-info">@result.ExtractedExperiences.Count</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (result.Success)
+                                {
+                                    <span class="text-success">@result.Message</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger">
+                                        @result.Message
+                                        @if (result.Errors.Any())
+                                        {
+                                            <br />
+                                
+                                            <small>@string.Join(", ", result.Errors)</small>
+                                        }
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="d-flex justify-content-between">
+            <a asp-action="BulkUpload" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Upload More
+            </a>
+            <a asp-controller="Student" asp-action="Index" class="btn btn-success">
+                <i class="fas fa-users"></i> View All Students
+            </a>
+        </div>
+    </div>
+</div>

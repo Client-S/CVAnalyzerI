@@ -1,0 +1,130 @@
+﻿@model CVAnalyzer.Application.DTOs.Cluster.ClusterDetailDto
+
+@{
+    ViewData["Title"] = Model.ClusterName;
+}
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Clusters</a></li>
+                <li class="breadcrumb-item active">@Model.ClusterName</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-layer-group"></i> @Model.ClusterName</h2>
+        <p class="text-muted">@Model.Description</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-controller="Report" asp-action="ExportCluster" asp-route-id="@Model.Id" class="btn btn-success">
+            <i class="fas fa-file-excel"></i> Export to Excel
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-users"></i> Total Students</h6>
+                        <h3>@Model.Students.Count</h3>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-code"></i> Common Skills</h6>
+                        <div class="mt-2">
+                            @if (Model.CommonSkills.Any())
+                            {
+                                @foreach (var skill in Model.CommonSkills)
+                                {
+                                    <span class="badge bg-primary fs-6 me-1">@skill</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">No common skills</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Cluster Members</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Skills</th>
+                        <th>Similarity Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in Model.Students.OrderByDescending(s => s.SimilarityScore))
+                    {
+                        <tr>
+                            <td><strong>@student.StudentNo</strong></td>
+                            <td>@student.Name</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(student.Email))
+                                {
+                                    <a href="mailto:@student.Email">@student.Email</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-info">@student.Skills.Count</span>
+                                @if (student.Skills.Any())
+                                {
+                                    <br />
+                                    <small class="text-muted">
+                                        @string.Join(", ", student.Skills.Take(3))
+                                        @if (student.Skills.Count > 3)
+                                        {
+                                            <text>...</text>
+                                        }
+                                    </small>
+                                }
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width: @student.SimilarityScore%"
+                                         aria-valuenow="@student.SimilarityScore" aria-valuemin="0" aria-valuemax="100">
+                                        @student.SimilarityScore.ToString("F1")
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <a asp-controller="Student" asp-action="Details" asp-route-id="@student.StudentId"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

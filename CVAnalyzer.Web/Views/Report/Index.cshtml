@@ -1,0 +1,100 @@
+﻿@{
+    ViewData["Title"] = "Reports & Analytics";
+    var stats = ViewBag.Stats;
+}
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-chart-bar"></i> Reports & Analytics</h2>
+        <p class="text-muted">Export student data and generate reports</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h5>Total Students</h5>
+                <h2>@stats?.TotalStudents</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5>Total Skills</h5>
+                <h2>@stats?.TotalSkills</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5>Total Clusters</h5>
+                <h2>@stats?.TotalClusters</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-users"></i> Student Reports</h5>
+            </div>
+            <div class="card-body">
+                <p>Export complete student database with all skills and experience.</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> Student information</li>
+                    <li><i class="fas fa-check text-success"></i> Skills list</li>
+                    <li><i class="fas fa-check text-success"></i> Experience count</li>
+                    <li><i class="fas fa-check text-success"></i> CV count</li>
+                </ul>
+            </div>
+            <div class="card-footer bg-white">
+                <a asp-action="ExportStudents" class="btn btn-success w-100">
+                    <i class="fas fa-file-excel"></i> Export Students to Excel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-code"></i> Skills Reports</h5>
+            </div>
+            <div class="card-body">
+                <p>Comprehensive skills analysis across all students.</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-info"></i> Skills summary</li>
+                    <li><i class="fas fa-check text-info"></i> Student count per skill</li>
+                    <li><i class="fas fa-check text-info"></i> Top 10 skills</li>
+                    <li><i class="fas fa-check text-info"></i> Skill distribution</li>
+                </ul>
+            </div>
+            <div class="card-footer bg-white">
+                <a asp-action="ExportSkills" class="btn btn-info w-100">
+                    <i class="fas fa-file-excel"></i> Export Skills Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Cluster Reports</h5>
+            </div>
+            <div class="card-body">
+                <p>Export individual cluster data with all members and their skills.</p>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle"></i> Go to <a asp-controller="Cluster" asp-action="Index">Clusters</a> page to export specific clusters.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

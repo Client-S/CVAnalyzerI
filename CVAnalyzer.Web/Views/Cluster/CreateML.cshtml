@@ -1,0 +1,244 @@
+﻿@{
+    ViewData["Title"] = "Create ML Cluster";
+}
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Clusters</a></li>
+                <li class="breadcrumb-item active">Create ML Cluster</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <div class="card shadow-lg">
+            <div class="card-header bg-gradient-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-brain"></i> Create ML-Powered Cluster
+                </h4>
+                <small>Using Machine Learning (ML.NET) for intelligent grouping</small>
+            </div>
+            <div class="card-body">
+
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb"></i> <strong>ML Clustering:</strong>
+                    Advanced algorithms that automatically detect patterns and group students based on skill similarity using semantic matching.
+                </div>
+
+                <!-- Tabs for different algorithms -->
+                <ul class="nav nav-tabs mb-4" id="clusterTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="kmeans-tab" data-bs-toggle="tab"
+                                data-bs-target="#kmeans" type="button" role="tab">
+                            <i class="fas fa-sitemap"></i> K-Means Clustering
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="dbscan-tab" data-bs-toggle="tab"
+                                data-bs-target="#dbscan" type="button" role="tab">
+                            <i class="fas fa-project-diagram"></i> DBSCAN Clustering
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="simple-tab" data-bs-toggle="tab"
+                                data-bs-target="#simple" type="button" role="tab">
+                            <i class="fas fa-layer-group"></i> Simple Clustering
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="clusterTabContent">
+
+                    <!-- K-Means Tab -->
+                    <div class="tab-pane fade show active" id="kmeans" role="tabpanel">
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-info-circle"></i> K-Means Algorithm</h6>
+                            <p class="mb-0">
+                                <strong>Best for:</strong> Creating a specific number of balanced groups<br />
+                                <strong>How it works:</strong> Uses ML.NET to find K cluster centroids that minimize distances<br />
+                                <strong>Semantic matching:</strong> Recognizes JavaScript = JS, React = ReactJS, etc.
+                            </p>
+                        </div>
+
+                        <form method="post" asp-action="CreateKMeans">
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label for="kmeansName" class="form-label">
+                                    Cluster Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" id="kmeansName" name="clusterName"
+                                       class="form-control" placeholder="e.g., ML Project Teams 2024" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="numberOfClusters" class="form-label">
+                                    Number of Clusters (K)
+                                </label>
+                                <input type="number" id="numberOfClusters" name="numberOfClusters"
+                                       class="form-control" value="3" min="2" max="10" />
+                                <div class="form-text">
+                                    <i class="fas fa-lightbulb"></i> Choose how many groups you want (2-10)
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-magic"></i> Create K-Means Cluster (ML.NET)
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- DBSCAN Tab -->
+                    <div class="tab-pane fade" id="dbscan" role="tabpanel">
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-info-circle"></i> DBSCAN Algorithm</h6>
+                            <p class="mb-0">
+                                <strong>Best for:</strong> Finding natural groupings without specifying count<br />
+                                <strong>How it works:</strong> Density-based clustering that finds groups automatically<br />
+                                <strong>Advantage:</strong> Handles outliers, discovers cluster count naturally
+                            </p>
+                        </div>
+
+                        <form method="post" asp-action="CreateDBSCAN">
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label for="dbscanName" class="form-label">
+                                    Cluster Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" id="dbscanName" name="clusterName"
+                                       class="form-control" placeholder="e.g., Natural Groups 2024" required />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="epsilon" class="form-label">
+                                        Epsilon (ε) - Distance Threshold
+                                    </label>
+                                    <input type="number" id="epsilon" name="epsilon"
+                                           class="form-control" value="0.5" min="0.1" max="2.0" step="0.1" />
+                                    <div class="form-text">
+                                        <small>Lower = tighter groups (0.3-0.5 recommended)</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="minPoints" class="form-label">
+                                        Min Points - Minimum Group Size
+                                    </label>
+                                    <input type="number" id="minPoints" name="minPoints"
+                                           class="form-control" value="2" min="2" max="10" />
+                                    <div class="form-text">
+                                        <small>Minimum students to form a cluster</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-question-circle"></i> <strong>Tip:</strong>
+                                DBSCAN will automatically find the optimal number of clusters. Some students might be marked as outliers if they don't fit any group.
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-warning btn-lg">
+                                    <i class="fas fa-magic"></i> Create DBSCAN Cluster (ML.NET)
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Simple Tab -->
+                    <div class="tab-pane fade" id="simple" role="tabpanel">
+                        <div class="alert alert-secondary">
+                            <h6><i class="fas fa-info-circle"></i> Simple Algorithm</h6>
+                            <p class="mb-0">
+                                <strong>Best for:</strong> Quick grouping without ML overhead<br />
+                                <strong>How it works:</strong> Sort by skill count and divide into equal groups<br />
+                                <strong>Use case:</strong> Fast results, educational purposes
+                            </p>
+                        </div>
+
+                        <form method="post" asp-action="Create">
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label for="simpleName" class="form-label">
+                                    Cluster Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" id="simpleName" name="clusterName"
+                                       class="form-control" placeholder="e.g., Quick Groups" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="numberOfGroups" class="form-label">
+                                    Number of Groups
+                                </label>
+                                <input type="number" id="numberOfGroups" name="numberOfGroups"
+                                       class="form-control" value="3" min="2" max="10" />
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-layer-group"></i> Create Simple Cluster
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="fas fa-sitemap fa-3x text-success mb-2"></i>
+                                <h6>K-Means</h6>
+                                <small>Balanced groups, specify count</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <i class="fas fa-project-diagram fa-3x text-warning mb-2"></i>
+                                <h6>DBSCAN</h6>
+                                <small>Natural groups, auto-detect</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-secondary">
+                            <div class="card-body text-center">
+                                <i class="fas fa-layer-group fa-3x text-secondary mb-2"></i>
+                                <h6>Simple</h6>
+                                <small>Fast, rule-based</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Clusters
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+</style>

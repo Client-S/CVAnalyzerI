@@ -1,0 +1,47 @@
+﻿@{
+    ViewData["Title"] = "Create Cluster";
+}
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-plus"></i> Create New Cluster</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-action="Create">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label for="clusterName" class="form-label">Cluster Name <span class="text-danger">*</span></label>
+                        <input type="text" id="clusterName" name="clusterName" class="form-control"
+                               placeholder="e.g., Web Development Team" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="numberOfGroups" class="form-label">Number of Groups</label>
+                        <input type="number" id="numberOfGroups" name="numberOfGroups"
+                               class="form-control" value="3" min="2" max="10" />
+                        <div class="form-text">
+                            Students will be grouped into this many clusters (2-10)
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>How it works:</strong><br />
+                        Students are grouped based on their skill count. Those with similar numbers of skills will be in the same group.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-magic"></i> Create Cluster
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

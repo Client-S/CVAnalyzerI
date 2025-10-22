@@ -1,0 +1,226 @@
+﻿@model CVAnalyzer.Application.DTOs.Student.StudentDto
+
+@{
+    ViewData["Title"] = $"Student Details - {Model.Name}";
+    var cvDocuments = ViewBag.CVDocuments as List<CVAnalyzer.Application.DTOs.CV.CVDocumentDto>;
+}
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Students</a></li>
+                <li class="breadcrumb-item active">@Model.Name</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-user-graduate"></i> @Model.Name</h2>
+        <p class="text-muted">Student ID: <strong>@Model.StudentId</strong></p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a asp-controller="CV" asp-action="Upload" class="btn btn-success">
+                <i class="fas fa-upload"></i> Upload CV
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-md-4">
+        <!-- Contact Information -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-address-card"></i> Contact Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong><i class="fas fa-envelope"></i> Email:</strong><br />
+                    @if (!string.IsNullOrEmpty(Model.Email))
+                    {
+                        <a href="mailto:@Model.Email">@Model.Email</a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Not provided</span>
+                    }
+                </div>
+                <div class="mb-3">
+                    <strong><i class="fas fa-phone"></i> Phone:</strong><br />
+                    @if (!string.IsNullOrEmpty(Model.Phone))
+                    {
+                        <a href="tel:@Model.Phone">@Model.Phone</a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Not provided</span>
+                    }
+                </div>
+                <div>
+                    <strong><i class="fas fa-calendar"></i> Registered:</strong><br />
+                    @Model.CreatedDate.ToString("MMMM dd, yyyy")
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Quick Stats</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-code text-primary"></i> Skills</span>
+                    <span class="badge bg-primary rounded-pill">@Model.Skills.Count</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-briefcase text-success"></i> Experiences</span>
+                    <span class="badge bg-success rounded-pill">@Model.Experiences.Count</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-file-pdf text-danger"></i> CVs Uploaded</span>
+                    <span class="badge bg-danger rounded-pill">@Model.CVCount</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-md-8">
+        <!-- Skills -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-code"></i> Skills</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Skills.Any())
+                {
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var skill in Model.Skills)
+                        {
+                            <span class="badge bg-primary fs-6 p-2">@skill</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">No skills extracted yet. Upload a CV to extract skills automatically.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Work Experience -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-briefcase"></i> Work Experience</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Experiences.Any())
+                {
+                    @foreach (var exp in Model.Experiences)
+                    {
+                        <div class="mb-3 pb-3 border-bottom">
+                            <h6 class="fw-bold">@exp.Position</h6>
+                            <p class="mb-1">
+                                <i class="fas fa-building text-muted"></i> <strong>@exp.Company</strong>
+                            </p>
+                            <p class="mb-1 text-muted">
+                                <i class="fas fa-calendar"></i> @exp.Duration
+                                @if (exp.IsCurrent)
+                                {
+                                    <span class="badge bg-success">Current</span>
+                                }
+                            </p>
+                            @if (!string.IsNullOrEmpty(exp.Description))
+                            {
+                                <p class="mb-0">@exp.Description</p>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">No work experience recorded yet.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Uploaded CVs -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-file-pdf"></i> Uploaded CVs</h5>
+            </div>
+            <div class="card-body">
+                @if (cvDocuments != null && cvDocuments.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th>Status</th>
+                                    <th>Upload Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cv in cvDocuments)
+                                {
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-file-pdf text-danger"></i> @cv.FileName
+                                        </td>
+                                        <td>@cv.FileType.ToUpper()</td>
+                                        <td>@((cv.FileSize / 1024.0).ToString("F2")) KB</td>
+                                        <td>
+                                            @if (cv.ProcessingStatus == "Completed")
+                                            {
+                                                <span class="badge bg-success">@cv.ProcessingStatus</span>
+                                            }
+                                            else if (cv.ProcessingStatus == "Processing")
+                                            {
+                                                <span class="badge bg-info">@cv.ProcessingStatus</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">@cv.ProcessingStatus</span>
+                                            }
+                                        </td>
+                                        <td>@cv.UploadDate.ToString("MMM dd, yyyy")</td>
+                                        <td>
+                                            <form method="post" asp-controller="CV" asp-action="Delete" asp-route-id="@cv.Id"
+                                                  class="d-inline" onsubmit="return confirm('Delete this CV?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">No CVs uploaded yet.</p>
+                    <a asp-controller="CV" asp-action="Upload" class="btn btn-sm btn-primary">
+                        <i class="fas fa-upload"></i> Upload First CV
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

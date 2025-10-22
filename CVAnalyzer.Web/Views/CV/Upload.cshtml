@@ -1,0 +1,95 @@
+﻿@model CVAnalyzer.Application.DTOs.CV.CVUploadDto
+
+@{
+    ViewData["Title"] = "Upload CV";
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-upload"></i> Upload Student CV</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-action="Upload" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="StudentId" class="form-label">Student ID <span class="text-danger">*</span></label>
+                        <input asp-for="StudentId" class="form-control" placeholder="e.g., STU2024001" />
+                        <span asp-validation-for="StudentId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="StudentName" class="form-label">Student Name <span class="text-danger">*</span></label>
+                        <input asp-for="StudentName" class="form-control" placeholder="e.g., John Doe" />
+                        <span asp-validation-for="StudentName" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="student@example.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Phone" class="form-label">Phone</label>
+                            <input asp-for="Phone" class="form-control" placeholder="+1234567890" />
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CVFile" class="form-label">CV File <span class="text-danger">*</span></label>
+                        <input asp-for="CVFile" type="file" class="form-control" accept=".pdf,.docx"
+                               onchange="displayFileName(this)" />
+                        <span asp-validation-for="CVFile" class="text-danger"></span>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> Accepted formats: PDF, DOCX. Max size: 10MB
+                        </div>
+                        <div id="fileInfo" class="mt-2"></div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> The system will automatically extract skills, experience, and other information from the CV.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="uploadBtn">
+                            <i class="fas fa-upload"></i> Upload and Process
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function displayFileName(input) {
+            const fileInfo = document.getElementById('fileInfo');
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                fileInfo.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-file"></i> Selected: <strong>${file.name}</strong> (${fileSizeMB} MB)
+                    </div>
+                `;
+            }
+        }
+
+        document.querySelector('form').addEventListener('submit', function() {
+            const btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        });
+    </script>
+}
