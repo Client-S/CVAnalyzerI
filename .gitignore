@@ -1,0 +1,78 @@
+# .gitignore for CVAnalyzer (.NET 8)
+# Visual Studio / JetBrains
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.sln.ide
+
+# Build outputs
+[Bb]in/
+[Oo]bj/
+**/bin/
+**/obj/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Publish
+publish/
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+
+# npm
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# User secrets / local config
+appsettings.Development.json
+secrets.json
+*.local
+.env
+
+# Database files
+*.db
+*.sqlite
+
+# Generated / tooling / IDE helper files
+# Exclude Razor generated files and other generated C# files that should not be committed
+**/*.cshtml.g.cs
+**/*.ide.g.cs
+**/*ide.g.cs
+**/*.g.cs
+
+# Copilot / temporary files that sometimes get added by extensions/tools
+.copilot/
+*.copilot
+
+# Ignore Visual Studio temporary files
+*.pidb
+*.svclog
+*.userprefs
+
+# Ignore generated test result files
+TestResults/
+
+# Ignore package directories and local tool files
+.nuget/
+.vsconfig
+
+# Keep this file at repository root. Add any additional local ignores below.
