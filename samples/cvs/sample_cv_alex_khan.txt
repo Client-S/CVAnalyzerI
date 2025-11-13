@@ -1,0 +1,28 @@
+Student ID: S23456
+Name: Alex Khan
+Email: alex.khan@example.com
+Phone: +44 7777 888888
+
+Summary:
+Experienced backend developer focused on .NET Core and performance optimization.
+
+Skills:
+- C#
+- ASP.NET Core
+- Entity Framework Core
+- SQL Server
+- Redis
+- Docker
+
+Experience:
+- Software Developer at TechCorp (2019-2022)
+  - Built microservices and optimized DB queries
+- Senior Engineer at Cloudify (2022-Present)
+  - Led migration to containerized infrastructure
+
+Education:
+- BEng Software Engineering, University of London
+
+Languages:
+- English (native)
+- Urdu (conversational)

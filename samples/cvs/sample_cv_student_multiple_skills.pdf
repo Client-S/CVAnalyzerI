@@ -1,0 +1,55 @@
+%PDF-1.1
+%ããÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 260 >>
+stream
+BT
+/F1 14 Tf
+72 740 Td
+(Student ID: S45678) Tj
+0 -18 Td
+(Name: Priya Patel) Tj
+0 -18 Td
+(Email: priya.patel@example.com) Tj
+0 -18 Td
+(Phone: +91 98765 43210) Tj
+0 -24 Td
+(Skills:) Tj
+0 -18 Td
+(- C#) Tj
+0 -18 Td
+(- Python) Tj
+0 -18 Td
+(- ML.NET) Tj
+0 -18 Td
+(- JavaScript) Tj
+0 -18 Td
+(- React) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000065 00000 n 
+0000000120 00000 n 
+0000000200 00000 n 
+0000000310 00000 n 
+trailer
+<< /Root 1 0 R /Size 6 >>
+startxref
+560
+%%EOF

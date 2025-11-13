@@ -1,0 +1,61 @@
+%PDF-1.1
+%ããÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 340 >>
+stream
+BT
+/F1 14 Tf
+72 740 Td
+(ID Estudiante: S34567) Tj
+0 -18 Td
+(Nombre: Maria Garcia) Tj
+0 -18 Td
+(Email: maria.garcia@example.com) Tj
+0 -18 Td
+(Teléfono: +34 600 123 456) Tj
+0 -24 Td
+(Resumen:) Tj
+0 -18 Td
+(Desarrolladora de software con experiencia en front-end y back-end.) Tj
+0 -24 Td
+(Habilidades:) Tj
+0 -18 Td
+(- JavaScript, React) Tj
+0 -18 Td
+(- C# / ASP.NET Core) Tj
+0 -24 Td
+(Experiencia:) Tj
+0 -18 Td
+(- Desarrolladora, Soluciones S.A. (2018-2023) -- Desarrollo de aplicaciones web.) Tj
+0 -24 Td
+(Educación:) Tj
+0 -18 Td
+(- Grado en Ingeniería Informática, Universidad Complutense) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000065 00000 n 
+0000000120 00000 n 
+0000000200 00000 n 
+0000000410 00000 n 
+trailer
+<< /Root 1 0 R /Size 6 >>
+startxref
+620
+%%EOF
