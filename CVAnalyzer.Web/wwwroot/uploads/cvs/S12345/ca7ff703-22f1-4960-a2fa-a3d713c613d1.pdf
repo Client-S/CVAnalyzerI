@@ -1,0 +1,67 @@
+%PDF-1.1
+%ããÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 320 >>
+stream
+BT
+/F1 14 Tf
+72 740 Td
+(Student ID: S12345) Tj
+0 -18 Td
+(Name: John Doe) Tj
+0 -18 Td
+(Email: john.doe@example.com) Tj
+0 -18 Td
+(Phone: +1 555 123 4567) Tj
+0 -24 Td
+(Summary:) Tj
+0 -18 Td
+(Experienced full-stack developer with expertise in C#, ASP.NET Core and cloud services.) Tj
+0 -24 Td
+(Skills:) Tj
+0 -18 Td
+(- C#) Tj
+0 -18 Td
+(- ASP.NET Core) Tj
+0 -18 Td
+(- Entity Framework Core) Tj
+0 -18 Td
+(- JavaScript, React) Tj
+0 -24 Td
+(Experience:) Tj
+0 -18 Td
+(- Senior Developer, Acme Corp (2020-2024) -- Led web platform rewrite using ASP.NET Core.) Tj
+0 -18 Td
+(- Developer, WebStart (2017-2020) -- Built APIs and background jobs.) Tj
+0 -24 Td
+(Education:) Tj
+0 -18 Td
+(- BSc Computer Science, State University (2016)) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000065 00000 n 
+0000000120 00000 n 
+0000000200 00000 n 
+0000000370 00000 n 
+trailer
+<< /Root 1 0 R /Size 6 >>
+startxref
+480
+%%EOF
