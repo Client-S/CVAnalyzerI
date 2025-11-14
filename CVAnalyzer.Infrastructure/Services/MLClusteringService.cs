@@ -4,6 +4,7 @@ using CVAnalyzer.Application.Services;
 using CVAnalyzer.Core.Entities;
 using CVAnalyzer.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.ML;
 using Microsoft.ML.Data;
@@ -539,7 +540,23 @@ namespace CVAnalyzer.Infrastructure.Services
 
         private async Task<ClusterDetailDto> GetClusterDetails(int clusterId)
         {
-            var cluster = await _unitOfWork.Clusters.GetByIdAsync(clusterId);
+            var clusterMembers = await _unitOfWork.Clusters.FindAsync(
+
+                c => c.Id == clusterId,
+
+                include: q => q
+
+                    .Include(c => c.Members)
+
+                        .ThenInclude(m => m.Student)
+
+                            .ThenInclude(s => s.StudentSkills)
+
+                                .ThenInclude(ss => ss.Skill));
+
+
+
+            var cluster = clusterMembers.FirstOrDefault();
             if (cluster == null)
                 throw new InvalidOperationException("Cluster not found");
 
