@@ -10,6 +10,7 @@
         "dependencies": {
           "CVAnalyzer.Application": "1.0.0",
           "CVAnalyzer.Core": "1.0.0",
+          "ClosedXML": "0.55.0",
           "DocumentFormat.OpenXml": "3.0.0",
           "EPPlus": "7.0.0",
           "Microsoft.AspNetCore.Hosting.Abstractions": "2.3.0",
@@ -58,6 +59,14 @@
           "lib/netstandard2.0/Azure.Identity.dll": {
             "assemblyVersion": "1.11.4.0",
             "fileVersion": "1.1100.424.31005"
+          }
+        }
+      },
+      "ClosedXML/0.55.0": {
+        "runtime": {
+          "lib/ClosedXML.dll": {
+            "assemblyVersion": "0.55.0.0",
+            "fileVersion": "0.55.0.0"
           }
         }
       },
@@ -1854,6 +1863,13 @@
       "sha512": "sha512-Sf4BoE6Q3jTgFkgBkx7qztYOFELBCo+wQgpYDwal/qJ1unBH73ywPztIJKXBXORRzAeNijsuxhk94h0TIMvfYg==",
       "path": "azure.identity/1.11.4",
       "hashPath": "azure.identity.1.11.4.nupkg.sha512"
+    },
+    "ClosedXML/0.55.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-7DuN4ItcXsnHXPUAkKHA8MY5kyfaRiZ+3meKEZbQ+f2n8EkNA8/jTqEsWKLKG/W9wpCLCR1GYjE6n+lddlu2QQ==",
+      "path": "closedxml/0.55.0",
+      "hashPath": "closedxml.0.55.0.nupkg.sha512"
     },
     "DocumentFormat.OpenXml/3.0.0": {
       "type": "package",

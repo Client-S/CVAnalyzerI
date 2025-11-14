@@ -55,6 +55,8 @@ namespace CVAnalyzer.Infrastructure.Services
                 FileName = file.FileName
             };
 
+            // Start a transaction to avoid partial commits
+            await _unitOfWork.BeginTransactionAsync();
             try
             {
                 // Validate file
@@ -63,6 +65,7 @@ namespace CVAnalyzer.Infrastructure.Services
                 {
                     result.Success = false;
                     result.Message = validation.ErrorMessage;
+                    await _unitOfWork.RollbackTransactionAsync();
                     return result;
                 }
 
@@ -87,6 +90,10 @@ namespace CVAnalyzer.Infrastructure.Services
                     await _unitOfWork.Students.AddAsync(student);
                     await _unitOfWork.SaveChangesAsync();
                 }
+
+                // Ensure navigation collections exist
+                student.StudentSkills ??= new List<StudentSkill>();
+                student.Experiences ??= new List<Experience>();
 
                 // Save file
                 var fileExtension = Path.GetExtension(file.FileName);
@@ -125,17 +132,15 @@ namespace CVAnalyzer.Infrastructure.Services
                         {
                             SkillName = skillName,
                             NormalizedName = normalizedName,
-                            Category = "Technical", // Default category
+                            Category = "Technical",
                             CreatedDate = DateTime.UtcNow
                         };
                         await _unitOfWork.Skills.AddAsync(skill);
                         await _unitOfWork.SaveChangesAsync();
                     }
 
-                    // Add to student skills if not already present
-                    var existingStudentSkill = student.StudentSkills
-                        .FirstOrDefault(ss => ss.SkillId == skill.Id);
-
+                    // Add StudentSkill explicitly via repository and navigation
+                    var existingStudentSkill = student.StudentSkills.FirstOrDefault(ss => ss.SkillId == skill.Id);
                     if (existingStudentSkill == null)
                     {
                         var studentSkill = new StudentSkill
@@ -143,8 +148,15 @@ namespace CVAnalyzer.Infrastructure.Services
                             StudentId = student.Id,
                             SkillId = skill.Id,
                             ExtractedText = skillName,
-                            ConfidenceScore = 0.8 // Default confidence
+                            ConfidenceScore = 0.8
                         };
+
+                        // Add through repository to ensure it's tracked and persisted
+                        await _unitOfWork.StudentSkills.AddAsync(studentSkill);
+
+                        // Keep navigation in sync for in-memory usage
+                        student.StudentSkills.Add(studentSkill);
+
                         await _unitOfWork.SaveChangesAsync();
                     }
 
@@ -190,6 +202,8 @@ namespace CVAnalyzer.Infrastructure.Services
                 await _auditService.LogAsync("UploadCV", "CVDocument", cvDocument.Id.ToString(),
                     new { StudentId = studentId, FileName = file.FileName });
 
+                await _unitOfWork.CommitTransactionAsync();
+
                 result.Success = true;
                 result.Message = "CV processed successfully";
                 result.StudentId = student.Id;
@@ -201,6 +215,7 @@ namespace CVAnalyzer.Infrastructure.Services
             }
             catch (Exception ex)
             {
+                try { await _unitOfWork.RollbackTransactionAsync(); } catch { /* ignore */ }
                 _logger.LogError(ex, "Error processing CV: {FileName}", file.FileName);
                 result.Success = false;
                 result.Message = "Error processing CV";
@@ -329,7 +344,7 @@ namespace CVAnalyzer.Infrastructure.Services
 
         private (bool IsValid, string ErrorMessage) ValidateFile(IFormFile file)
         {
-            var maxFileSize = _configuration.GetValue<long>("FileUpload:MaxFileSize", 10485760); // 10MB default
+            var maxFileSize = _configuration.GetValue<long>("FileUpload:MaxFileSize", 10485760);
             var allowedExtensions = _configuration.GetSection("FileUpload:AllowedExtensions").Get<string[]>()
                 ?? new[] { ".pdf", ".docx" };
 
@@ -337,16 +352,20 @@ namespace CVAnalyzer.Infrastructure.Services
                 return (false, "File is empty");
 
             if (file.Length > maxFileSize)
-                return (false, $"File size exceeds maximum allowed size of {maxFileSize / 1024 / 1024}MB");
+                return (false, $"File size exceeds {maxFileSize / 1024 / 1024}MB limit");
 
             var extension = Path.GetExtension(file.FileName).ToLower();
             if (!allowedExtensions.Contains(extension))
-                return (false, $"File type {extension} is not allowed. Allowed types: {string.Join(", ", allowedExtensions)}");
+                return (false, $"File type {extension} not allowed");
+
+            // Check MIME type (basic)
+            var validMimes = new[] { "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
+            if (!validMimes.Contains(file.ContentType ?? ""))
+                return (false, "Invalid file MIME type");
 
             return (true, string.Empty);
         }
 
-        // Helper method to get current user ID
         private string GetCurrentUserId()
         {
             var httpContext = _httpContextAccessor.HttpContext;

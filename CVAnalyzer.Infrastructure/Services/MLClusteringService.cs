@@ -26,27 +26,27 @@ namespace CVAnalyzer.Infrastructure.Services
 
         // Skill similarity mapping for semantic matching
         private readonly Dictionary<string, List<string>> _skillSynonyms = new()
-    {
-        { "JavaScript", new() { "JS", "ECMAScript", "Javascript", "javascript" } },
-        { "Python", new() { "Python3", "Py", "python" } },
-        { "C#", new() { "CSharp", "C Sharp", "csharp" } },
-        { "Java", new() { "java" } },
-        { "React", new() { "ReactJS", "React.js", "react" } },
-        { "Angular", new() { "AngularJS", "Angular.js", "angular" } },
-        { "Vue", new() { "VueJS", "Vue.js", "vue" } },
-        { "Node.js", new() { "NodeJS", "Node", "node" } },
-        { "ASP.NET", new() { "ASPNET", "ASP.NET Core", "aspnet" } },
-        { "SQL Server", new() { "MSSQL", "MS SQL", "Microsoft SQL Server", "sqlserver" } },
-        { "MongoDB", new() { "Mongo", "mongo", "mongodb" } },
-        { "PostgreSQL", new() { "Postgres", "postgres", "postgresql" } },
-        { "Docker", new() { "docker" } },
-        { "Kubernetes", new() { "K8s", "k8s", "kubernetes" } },
-        { "AWS", new() { "Amazon Web Services", "aws" } },
-        { "Azure", new() { "Microsoft Azure", "azure" } },
-        { "Git", new() { "git", "GitHub", "GitLab" } },
-        { "Machine Learning", new() { "ML", "ml" } },
-        { "Artificial Intelligence", new() { "AI", "ai" } }
-    };
+        {
+            { "JavaScript", new() { "JS", "ECMAScript", "Javascript", "javascript" } },
+            { "Python", new() { "Python3", "Py", "python" } },
+            { "C#", new() { "CSharp", "C Sharp", "csharp" } },
+            { "Java", new() { "java" } },
+            { "React", new() { "ReactJS", "React.js", "react" } },
+            { "Angular", new() { "AngularJS", "Angular.js", "angular" } },
+            { "Vue", new() { "VueJS", "Vue.js", "vue" } },
+            { "Node.js", new() { "NodeJS", "Node", "node" } },
+            { "ASP.NET", new() { "ASPNET", "ASP.NET Core", "aspnet" } },
+            { "SQL Server", new() { "MSSQL", "MS SQL", "Microsoft SQL Server", "sqlserver" } },
+            { "MongoDB", new() { "Mongo", "mongo", "mongodb" } },
+            { "PostgreSQL", new() { "Postgres", "postgres", "postgresql" } },
+            { "Docker", new() { "docker" } },
+            { "Kubernetes", new() { "K8s", "k8s", "kubernetes" } },
+            { "AWS", new() { "Amazon Web Services", "aws" } },
+            { "Azure", new() { "Microsoft Azure", "azure" } },
+            { "Git", new() { "git", "GitHub", "GitLab" } },
+            { "Machine Learning", new() { "ML", "ml" } },
+            { "Artificial Intelligence", new() { "AI", "ai" } }
+        };
 
         public MLClusteringService(
             IUnitOfWork unitOfWork,
@@ -81,6 +81,9 @@ namespace CVAnalyzer.Infrastructure.Services
 
                 // Create feature vectors for ML
                 var studentFeatures = CreateFeatureVectors(normalizedStudents);
+
+                if (studentFeatures.Count == 0)
+                    throw new InvalidOperationException("No feature vectors could be created for clustering");
 
                 // Prepare data for ML.NET
                 var trainingData = _mlContext.Data.LoadFromEnumerable(
@@ -175,6 +178,9 @@ namespace CVAnalyzer.Infrastructure.Services
                 // Normalize skills
                 var normalizedStudents = NormalizeStudentSkills(students);
                 var studentFeatures = CreateFeatureVectors(normalizedStudents);
+
+                if (studentFeatures.Count == 0)
+                    throw new InvalidOperationException("No feature vectors could be created for clustering");
 
                 // Implement DBSCAN algorithm
                 var clusterAssignments = PerformDBSCAN(studentFeatures, epsilon, minPoints);
@@ -292,7 +298,7 @@ namespace CVAnalyzer.Infrastructure.Services
             // Calculate Levenshtein distance similarity
             var distance = LevenshteinDistance(norm1, norm2);
             var maxLength = Math.Max(norm1.Length, norm2.Length);
-            var similarity = 1.0 - ((double)distance / maxLength);
+            var similarity = 1.0 - ((double)distance / Math.Max(1, maxLength));
 
             return Task.FromResult(Math.Max(0, similarity));
         }
@@ -341,13 +347,16 @@ namespace CVAnalyzer.Infrastructure.Services
 
             _logger.LogInformation("Creating feature vectors with {SkillCount} unique skills", allSkills.Count);
 
+            if (allSkills.Count == 0)
+                return new List<StudentFeatures>();
+
             var features = new List<StudentFeatures>();
 
             foreach (var student in students)
             {
                 var studentSkills = student.StudentSkills
                     .Select(ss => NormalizeSkill(ss.Skill.SkillName))
-                    .ToHashSet();
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 // Create binary vector (1 if skill present, 0 if not)
                 var vector = allSkills
@@ -359,14 +368,14 @@ namespace CVAnalyzer.Infrastructure.Services
                     StudentId = student.StudentId,
                     SkillVector = vector,
                     SkillCount = studentSkills.Count,
-                    ExperienceCount = student.Experiences.Count
+                    ExperienceCount = student.Experiences?.Count ?? 0
                 });
             }
 
             return features;
         }
 
-        // Helper: DBSCAN implementation
+        // Helper: DBSCAN implementation (unchanged)
         private List<DBSCANResult> PerformDBSCAN(List<StudentFeatures> features, double epsilon, int minPoints)
         {
             var results = features.Select((f, i) => new DBSCANResult
@@ -586,7 +595,7 @@ namespace CVAnalyzer.Infrastructure.Services
     // ML.NET Data Models
     public class StudentClusterData
     {
-        [VectorType(1000)] // Adjust based on total unique skills
+        // Do not hardcode vector length; ML.NET will infer from provided feature arrays.
         public float[] Features { get; set; } = Array.Empty<float>();
     }
 
@@ -597,6 +606,14 @@ namespace CVAnalyzer.Infrastructure.Services
 
         [ColumnName("Score")]
         public float[] Distances { get; set; } = Array.Empty<float>();
+    }
+
+    public class StudentFeatures
+    {
+        public string StudentId { get; set; } = string.Empty;
+        public float[] SkillVector { get; set; } = Array.Empty<float>();
+        public int SkillCount { get; set; }
+        public int ExperienceCount { get; set; }
     }
 
     public class DBSCANResult

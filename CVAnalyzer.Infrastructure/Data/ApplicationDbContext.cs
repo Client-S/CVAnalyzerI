@@ -66,6 +66,12 @@ namespace CVAnalyzer.Infrastructure.Data
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(e => new { e.StudentId, e.SkillId });
+
+                modelBuilder.Entity<StudentSkill>()
+                    .HasIndex(ss => ss.StudentId);
+
+                modelBuilder.Entity<StudentSkill>()
+                    .HasIndex(ss => ss.SkillId);
             });
 
             // Experience Configuration
@@ -98,6 +104,9 @@ namespace CVAnalyzer.Infrastructure.Data
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(e => e.ProcessingStatus);
+
+                modelBuilder.Entity<CVDocument>()
+                    .HasIndex(cd => cd.StudentId);
             });
 
             // StudentCluster Configuration
@@ -129,6 +138,9 @@ namespace CVAnalyzer.Infrastructure.Data
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(e => new { e.ClusterId, e.StudentId }).IsUnique();
+
+                modelBuilder.Entity<ClusterMember>()
+                    .HasIndex(cm => cm.ClusterId);
             });
 
             // AuditLog Configuration

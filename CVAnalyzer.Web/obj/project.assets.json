@@ -47,6 +47,15 @@
           }
         }
       },
+      "ClosedXML/0.55.0": {
+        "type": "package",
+        "compile": {
+          "lib/ClosedXML.dll": {}
+        },
+        "runtime": {
+          "lib/ClosedXML.dll": {}
+        }
+      },
       "DocumentFormat.OpenXml/3.0.0": {
         "type": "package",
         "dependencies": {
@@ -3340,6 +3349,7 @@
         "dependencies": {
           "CVAnalyzer.Application": "1.0.0",
           "CVAnalyzer.Core": "1.0.0",
+          "ClosedXML": "0.22.0",
           "DocumentFormat.OpenXml": "3.0.0",
           "EPPlus": "7.0.0",
           "Microsoft.AspNetCore.Hosting.Abstractions": "2.3.0",
@@ -3399,6 +3409,19 @@
         "azureicon.png",
         "lib/netstandard2.0/Azure.Identity.dll",
         "lib/netstandard2.0/Azure.Identity.xml"
+      ]
+    },
+    "ClosedXML/0.55.0": {
+      "sha512": "7DuN4ItcXsnHXPUAkKHA8MY5kyfaRiZ+3meKEZbQ+f2n8EkNA8/jTqEsWKLKG/W9wpCLCR1GYjE6n+lddlu2QQ==",
+      "type": "package",
+      "path": "closedxml/0.55.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "closedxml.0.55.0.nupkg.sha512",
+        "closedxml.nuspec",
+        "lib/ClosedXML.XML",
+        "lib/ClosedXML.dll"
       ]
     },
     "DocumentFormat.OpenXml/3.0.0": {
@@ -9574,5 +9597,27 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "CVAnalyzer.Infrastructure depends on ClosedXML (>= 0.22.0) but ClosedXML 0.22.0 was not found. ClosedXML 0.55.0 was resolved instead.",
+      "libraryId": "ClosedXML",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'ClosedXML 0.55.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "libraryId": "ClosedXML",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
 }

@@ -15,7 +15,9 @@ namespace CVAnalyzer.Infrastructure.Data
         private IRepository<Experience>? _experiences;
         private IRepository<CVDocument>? _cvDocuments;
         private IRepository<StudentCluster>? _clusters;
-        private IRepository<AuditLog>? _auditLogs;
+        private IRepository<AuditLog>? _auditLogs; 
+        private IRepository<StudentSkill>? _studentSkills;
+        private IRepository<ClusterMember>? _clusterMembers;
 
         public UnitOfWork(ApplicationDbContext context)
         {
@@ -39,6 +41,12 @@ namespace CVAnalyzer.Infrastructure.Data
 
         public IRepository<AuditLog> AuditLogs =>
             _auditLogs ??= new Repository<AuditLog>(_context);
+
+        public IRepository<StudentSkill> StudentSkills =>
+            _studentSkills ??= new Repository<StudentSkill>(_context);
+
+        public IRepository<ClusterMember> ClusterMembers =>
+            _clusterMembers ??= new Repository<ClusterMember>(_context);
 
         public async Task<int> SaveChangesAsync()
         {
