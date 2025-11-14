@@ -66,6 +66,7 @@ namespace CVAnalyzer.Infrastructure.Data
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(e => new { e.StudentId, e.SkillId });
+                entity.HasIndex(e => e.SkillId);
 
                 modelBuilder.Entity<StudentSkill>()
                     .HasIndex(ss => ss.StudentId);
@@ -86,6 +87,7 @@ namespace CVAnalyzer.Infrastructure.Data
                     .WithMany(s => s.Experiences)
                     .HasForeignKey(e => e.StudentId)
                     .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(e => e.StudentId);
             });
 
             // CVDocument Configuration
@@ -103,6 +105,7 @@ namespace CVAnalyzer.Infrastructure.Data
                     .HasForeignKey(e => e.StudentId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                entity.HasIndex(e => e.StudentId);
                 entity.HasIndex(e => e.ProcessingStatus);
 
                 modelBuilder.Entity<CVDocument>()

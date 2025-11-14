@@ -51,8 +51,9 @@ namespace CVAnalyzer.Web.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var cvDocuments = await _cvProcessingService.GetStudentCVsAsync(id);
-                ViewBag.CVDocuments = cvDocuments;
+                //var cvDocuments = await _cvProcessingService.GetStudentCVsAsync(id);
+                //ViewBag.CVDocuments = cvDocuments;
+                // CV documents are now loaded with the student in a single query
 
                 return View(student);
             }

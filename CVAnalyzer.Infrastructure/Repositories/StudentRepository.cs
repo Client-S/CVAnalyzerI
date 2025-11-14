@@ -26,6 +26,24 @@ namespace CVAnalyzer.Infrastructure.Repositories
                 .FirstOrDefaultAsync(s => s.StudentId == studentId);
         }
 
+        public async Task<Student?> GetByIdWithDetailsAsync(int id)
+
+        {
+
+            return await _dbSet
+
+                .Include(s => s.StudentSkills)
+
+                    .ThenInclude(ss => ss.Skill)
+
+                .Include(s => s.Experiences)
+
+                .Include(s => s.CVDocuments)
+
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+        }
+
         public async Task<IEnumerable<Student>> GetStudentsWithSkillsAsync()
         {
             return await _dbSet

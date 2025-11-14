@@ -93,7 +93,7 @@
             </div>
         </div>
     </div>
-     m
+     
     <!-- Right Column -->
     <div class="col-md-8">
         <!-- Skills -->
@@ -160,22 +160,37 @@
                 <h5 class="mb-0"><i class="fas fa-file-pdf"></i> Uploaded CVs</h5>
             </div>
             <div class="card-body">
-                @if (cvDocuments != null && cvDocuments.Any())
+                @if (Model.CVDocuments != null && Model.CVDocuments.Any())
+
                 {
+
                     <div class="table-responsive">
+
                         <table class="table table-sm">
+
                             <thead>
+
                                 <tr>
+
                                     <th>File Name</th>
+
                                     <th>Type</th>
+
                                     <th>Size</th>
+
                                     <th>Status</th>
+
                                     <th>Upload Date</th>
+
                                     <th>Actions</th>
+
                                 </tr>
+
                             </thead>
+
                             <tbody>
-                                @foreach (var cv in cvDocuments)
+
+                                @foreach (var cv in Model.CVDocuments)
                                 {
                                     <tr>
                                         <td>

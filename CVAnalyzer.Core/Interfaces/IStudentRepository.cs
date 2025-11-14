@@ -10,6 +10,7 @@ namespace CVAnalyzer.Core.Interfaces
     public interface IStudentRepository : IRepository<Student>
     {
         Task<Student?> GetByStudentIdAsync(string studentId);
+        Task<Student?> GetByIdWithDetailsAsync(int id);
         Task<IEnumerable<Student>> GetStudentsWithSkillsAsync();
         Task<IEnumerable<Student>> SearchBySkillAsync(string skill);
         Task<bool> StudentIdExistsAsync(string studentId);

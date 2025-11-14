@@ -42,7 +42,8 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<StudentDto?> GetStudentByIdAsync(int id)
         {
-            var student = await _unitOfWork.Students.GetByIdAsync(id);
+            var student = await _unitOfWork.Students.GetByIdWithDetailsAsync(id);
+
             return student == null ? null : MapToDto(student);
         }
 
@@ -147,6 +148,31 @@ namespace CVAnalyzer.Infrastructure.Services
                     StartDate = e.StartDate,
                     EndDate = e.EndDate,
                     IsCurrent = e.IsCurrent
+                }).ToList(),
+                CVDocuments = student.CVDocuments.Select(cv => new CVDocumentDto
+
+                {
+
+                    Id = cv.Id,
+
+                    StudentId = student.StudentId,
+
+                    StudentName = student.Name,
+
+                    FileName = cv.FileName,
+
+                    FileType = cv.FileType,
+
+                    FileSize = cv.FileSize,
+
+                    ProcessingStatus = cv.ProcessingStatus,
+
+                    UploadDate = cv.UploadDate,
+
+                    ProcessedDate = cv.ProcessedDate,
+
+                    ErrorMessage = cv.ErrorMessage
+
                 }).ToList(),
                 CVCount = student.CVDocuments.Count,
                 CreatedDate = student.CreatedDate
