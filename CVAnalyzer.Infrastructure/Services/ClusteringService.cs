@@ -194,7 +194,10 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<List<ClusterStudentDto>> FindSimilarStudentsAsync(int studentId, int count = 5)
         {
-            var targetStudent = await _unitOfWork.Students.GetByIdAsync(studentId);
+            // Use GetByIdWithDetailsAsync to load StudentSkills with Skill entities
+
+            var targetStudent = await _unitOfWork.Students.GetByIdWithDetailsAsync(studentId);
+
             if (targetStudent == null) return new List<ClusterStudentDto>();
 
             var allStudents = (await _unitOfWork.Students.GetStudentsWithSkillsAsync())

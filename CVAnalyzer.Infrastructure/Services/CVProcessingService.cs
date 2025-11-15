@@ -3,6 +3,7 @@ using CVAnalyzer.Application.Services;
 using CVAnalyzer.Core.Entities;
 using CVAnalyzer.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -118,49 +119,165 @@ namespace CVAnalyzer.Infrastructure.Services
                 using var stream = file.OpenReadStream();
                 var extractedData = await _parserService.ParseAsync(stream, file.FileName, fileExtension);
 
-                // Process extracted skills
-                var extractedSkills = new List<string>();
-                foreach (var skillName in extractedData.Skills)
-                {
-                    var normalizedName = skillName.ToUpper().Replace(" ", "");
-                    var skill = (await _unitOfWork.Skills.FindAsync(s => s.NormalizedName == normalizedName))
-                        .FirstOrDefault();
+                // Process extracted skills - OPTIMIZED to batch database operations
 
-                    if (skill == null)
+                var extractedSkills = new List<string>();
+
+
+
+                // Step 1: Normalize all skill names
+
+                var normalizedSkillMap = extractedData.Skills
+
+                    .Select(skillName => new
+
                     {
-                        skill = new Skill
+
+                        OriginalName = skillName,
+
+                        NormalizedName = skillName.ToUpper().Replace(" ", "")
+
+                    })
+
+                    .ToList();
+
+
+
+                // Step 2: Batch lookup existing skills (single query)
+
+                var normalizedNames = normalizedSkillMap.Select(x => x.NormalizedName).ToList();
+
+                var existingSkills = (await _unitOfWork.Skills.FindAsync(
+
+                    s => normalizedNames.Contains(s.NormalizedName)))
+
+                    .ToDictionary(s => s.NormalizedName, s => s);
+
+
+
+                // Step 3: Collect new skills to add
+
+                var newSkills = new List<Skill>();
+
+                foreach (var skillMap in normalizedSkillMap)
+
+                {
+
+                    if (!existingSkills.ContainsKey(skillMap.NormalizedName))
+
+                    {
+
+                        var newSkill = new Skill
+
                         {
-                            SkillName = skillName,
-                            NormalizedName = normalizedName,
+
+                            SkillName = skillMap.OriginalName,
+
+                            NormalizedName = skillMap.NormalizedName,
+
                             Category = "Technical",
+
                             CreatedDate = DateTime.UtcNow
+
                         };
-                        await _unitOfWork.Skills.AddAsync(skill);
-                        await _unitOfWork.SaveChangesAsync();
+
+                        newSkills.Add(newSkill);
+
+                        existingSkills[skillMap.NormalizedName] = newSkill;
+
                     }
 
-                    // Add StudentSkill explicitly via repository and navigation
-                    var existingStudentSkill = student.StudentSkills.FirstOrDefault(ss => ss.SkillId == skill.Id);
-                    if (existingStudentSkill == null)
+                }
+
+
+
+                // Step 4: Add all new skills at once
+
+                if (newSkills.Any())
+
+                {
+
+                    foreach (var newSkill in newSkills)
+
                     {
+
+                        await _unitOfWork.Skills.AddAsync(newSkill);
+
+                    }
+
+                    await _unitOfWork.SaveChangesAsync(); // Single save for all skills
+
+                }
+
+
+
+                // Step 5: Collect new StudentSkills to add
+
+                var newStudentSkills = new List<StudentSkill>();
+
+                foreach (var skillMap in normalizedSkillMap)
+
+                {
+
+                    var skill = existingSkills[skillMap.NormalizedName];
+
+
+
+                    // Check if StudentSkill already exists
+
+                    var existingStudentSkill = student.StudentSkills
+
+                        .FirstOrDefault(ss => ss.SkillId == skill.Id);
+
+
+
+                    if (existingStudentSkill == null)
+
+                    {
+
                         var studentSkill = new StudentSkill
+
                         {
+
                             StudentId = student.Id,
+
                             SkillId = skill.Id,
-                            ExtractedText = skillName,
+
+                            ExtractedText = skillMap.OriginalName,
+
                             ConfidenceScore = 0.8
+
                         };
 
-                        // Add through repository to ensure it's tracked and persisted
-                        await _unitOfWork.StudentSkills.AddAsync(studentSkill);
+                        newStudentSkills.Add(studentSkill);
 
-                        // Keep navigation in sync for in-memory usage
                         student.StudentSkills.Add(studentSkill);
 
-                        await _unitOfWork.SaveChangesAsync();
                     }
 
-                    extractedSkills.Add(skillName);
+
+
+                    extractedSkills.Add(skillMap.OriginalName);
+
+                }
+
+
+
+                // Step 6: Add all new StudentSkills at once
+
+                if (newStudentSkills.Any())
+
+                {
+
+                    foreach (var studentSkill in newStudentSkills)
+
+                    {
+
+                        await _unitOfWork.StudentSkills.AddAsync(studentSkill);
+
+                    }
+
+                    await _unitOfWork.SaveChangesAsync(); // Single save for all StudentSkills
                 }
 
                 // Process extracted experiences
@@ -298,7 +415,13 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<List<CVDocumentDto>> GetStudentCVsAsync(int studentId)
         {
-            var cvDocuments = await _unitOfWork.CVDocuments.FindAsync(cv => cv.StudentId == studentId);
+            // Load CV documents with Student navigation property to prevent N+1 queries
+
+            var cvDocuments = await _unitOfWork.CVDocuments.FindAsync(
+
+                cv => cv.StudentId == studentId,
+
+                include: q => q.Include(cv => cv.Student));
 
             return cvDocuments.Select(cv => new CVDocumentDto
             {

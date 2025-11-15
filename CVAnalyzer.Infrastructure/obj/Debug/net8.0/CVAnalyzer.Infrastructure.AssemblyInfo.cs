@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CVAnalyzer.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e83f1ec433fdabe406deb5bb7063ee8cfd7811a8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3236d0302a80771ecd6053fda8854f11a2f69910")]
 [assembly: System.Reflection.AssemblyProductAttribute("CVAnalyzer.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CVAnalyzer.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

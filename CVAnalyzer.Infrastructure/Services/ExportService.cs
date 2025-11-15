@@ -2,12 +2,8 @@
 using CVAnalyzer.Application.Services;
 using CVAnalyzer.Core.Entities;
 using CVAnalyzer.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CVAnalyzer.Infrastructure.Services
 {
@@ -26,9 +22,39 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
-                // Fetch all data asynchronously
-                var students = (await _unitOfWork.Students.GetStudentsWithSkillsAsync()).ToList();
-                var clusters = (await _unitOfWork.Clusters.GetAllAsync()).ToList();
+                // Load students with all related entities for export
+
+                var students = (await _unitOfWork.Students.FindAsync(
+
+                    s => true,
+
+                    include: q => q
+
+                        .Include(s => s.StudentSkills)
+
+                            .ThenInclude(ss => ss.Skill)
+
+                        .Include(s => s.Experiences)
+
+                        .Include(s => s.CVDocuments))).ToList();
+
+
+
+                // Load clusters with all related entities for export
+
+                var clusters = (await _unitOfWork.Clusters.FindAsync(
+
+                    c => true,
+
+                    include: q => q
+
+                        .Include(c => c.Members)
+
+                            .ThenInclude(m => m.Student)
+
+                                .ThenInclude(s => s.StudentSkills)
+
+                                    .ThenInclude(ss => ss.Skill))).ToList();
 
                 var wb = new XLWorkbook();
 
@@ -57,7 +83,21 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
-                var students = (await _unitOfWork.Students.GetStudentsWithSkillsAsync()).ToList();
+                // Load students with all related entities for export
+
+                var students = (await _unitOfWork.Students.FindAsync(
+
+                    s => true,
+
+                    include: q => q
+
+                        .Include(s => s.StudentSkills)
+
+                            .ThenInclude(ss => ss.Skill)
+
+                        .Include(s => s.Experiences)
+
+                        .Include(s => s.CVDocuments))).ToList();
                 var wb = new XLWorkbook();
                 var ws = wb.Worksheets.Add("Students");
 
@@ -79,7 +119,25 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
-                var cluster = await _unitOfWork.Clusters.GetByIdAsync(clusterId);
+                // Load cluster with all related entities for export
+
+                var clusterData = await _unitOfWork.Clusters.FindAsync(
+
+                    c => c.Id == clusterId,
+
+                    include: q => q
+
+                        .Include(c => c.Members)
+
+                            .ThenInclude(m => m.Student)
+
+                                .ThenInclude(s => s.StudentSkills)
+
+                                    .ThenInclude(ss => ss.Skill));
+
+
+
+                var cluster = clusterData.FirstOrDefault();
                 if (cluster == null)
                     throw new ArgumentException($"Cluster with ID {clusterId} not found");
 
@@ -151,7 +209,17 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
-                var students = (await _unitOfWork.Students.GetStudentsWithSkillsAsync()).ToList();
+                // Load students with skills for the report
+
+                var students = (await _unitOfWork.Students.FindAsync(
+
+                    s => true,
+
+                    include: q => q
+
+                        .Include(s => s.StudentSkills)
+
+                            .ThenInclude(ss => ss.Skill))).ToList();
                 var wb = new XLWorkbook();
                 var ws = wb.Worksheets.Add("Skills Report");
 

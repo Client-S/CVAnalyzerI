@@ -4,6 +4,7 @@ using CVAnalyzer.Application.Services;
 using CVAnalyzer.Core.Entities;
 using CVAnalyzer.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -115,10 +116,25 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<IEnumerable<StudentDto>> SearchStudentsAsync(string searchTerm)
         {
-            var students = await _unitOfWork.Students.FindAsync(s =>
-                s.StudentId.Contains(searchTerm) ||
-                s.Name.Contains(searchTerm) ||
-                s.Email.Contains(searchTerm));
+            // Load students with all related entities to prevent N+1 queries
+
+            var students = await _unitOfWork.Students.FindAsync(
+
+                s => s.StudentId.Contains(searchTerm) ||
+
+                     s.Name.Contains(searchTerm) ||
+
+                     s.Email.Contains(searchTerm),
+
+                include: q => q
+
+                    .Include(s => s.StudentSkills)
+
+                        .ThenInclude(ss => ss.Skill)
+
+                    .Include(s => s.Experiences)
+
+                    .Include(s => s.CVDocuments));
 
             return students.Select(s => MapToDto(s)).ToList();
         }
