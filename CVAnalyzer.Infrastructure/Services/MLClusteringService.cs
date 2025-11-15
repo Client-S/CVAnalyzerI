@@ -93,12 +93,10 @@ namespace CVAnalyzer.Infrastructure.Services
                         Features = sf.SkillVector
                     }));
 
-                // Build K-Means clustering pipeline
-                var pipeline = _mlContext.Transforms
-                    .Concatenate("Features", nameof(StudentClusterData.Features))
-                    .Append(_mlContext.Clustering.Trainers.KMeans(
-                        featureColumnName: "Features",
-                        numberOfClusters: numberOfClusters));
+                // Build K-Means clustering pipeline - Features is already a vector, no need to concatenate
+                var pipeline = _mlContext.Clustering.Trainers.KMeans(
+                    featureColumnName: "Features",
+                    numberOfClusters: numberOfClusters);
 
                 // Train the model
                 _logger.LogInformation("Training K-Means model...");
@@ -610,7 +608,7 @@ namespace CVAnalyzer.Infrastructure.Services
     // ML.NET Data Models
     public class StudentClusterData
     {
-        // Do not hardcode vector length; ML.NET will infer from provided feature arrays.
+        [VectorType]
         public float[] Features { get; set; } = Array.Empty<float>();
     }
 
