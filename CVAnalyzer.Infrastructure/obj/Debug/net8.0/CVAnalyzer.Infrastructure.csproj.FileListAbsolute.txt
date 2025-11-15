@@ -17,12 +17,6 @@ C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Infrastructure\obj\Debug\net8.
 C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.pdb
 C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.genruntimeconfig.cache
 C:\Project\HubX\HubX\StudentCVAnalyzer\CVAnalyzer.Infrastructure\obj\Debug\net8.0\ref\CVAnalyzer.Infrastructure.dll
-C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.csproj.AssemblyReference.cache
-C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
-C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.AssemblyInfoInputs.cache
-C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.AssemblyInfo.cs
-C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.csproj.CoreCompileInputs.cache
-C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.sourcelink.json
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\bin\Debug\net8.0\CVAnalyzer.Infrastructure.deps.json
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\bin\Debug\net8.0\CVAnalyzer.Infrastructure.runtimeconfig.json
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\bin\Debug\net8.0\CVAnalyzer.Infrastructure.dll
@@ -31,6 +25,12 @@ C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\bin\Debug\net8.0\CVAn
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\bin\Debug\net8.0\CVAnalyzer.Core.dll
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\bin\Debug\net8.0\CVAnalyzer.Application.pdb
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\bin\Debug\net8.0\CVAnalyzer.Core.pdb
+C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.csproj.AssemblyReference.cache
+C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.AssemblyInfoInputs.cache
+C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.AssemblyInfo.cs
+C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.sourcelink.json
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyz.8AEB56E4.Up2Date
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\CVAnalyzer.Infrastructure.dll
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Infrastructure\obj\Debug\net8.0\refint\CVAnalyzer.Infrastructure.dll

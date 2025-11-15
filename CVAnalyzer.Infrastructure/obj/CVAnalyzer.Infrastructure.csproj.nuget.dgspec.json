@@ -209,11 +209,11 @@
           "dependencies": {
             "ClosedXML": {
               "target": "Package",
-              "version": "[0.22.0, )"
+              "version": "[0.102.3, )"
             },
             "DocumentFormat.OpenXml": {
               "target": "Package",
-              "version": "[3.0.0, )"
+              "version": "[2.20.0, )"
             },
             "EPPlus": {
               "target": "Package",
