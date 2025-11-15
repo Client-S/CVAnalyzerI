@@ -36,10 +36,12 @@ namespace CVAnalyzer.Infrastructure.Services
         public async Task<List<ClusterDto>> GetAllClustersAsync()
         {
             var clusters = await _unitOfWork.Clusters.FindAsync(
-
                 c => true,
-
-                include: q => q.Include(c => c.Members));
+                include: q => q
+                    .Include(c => c.Members)
+                        .ThenInclude(m => m.Student)
+                            .ThenInclude(s => s.StudentSkills)
+                                .ThenInclude(ss => ss.Skill));
 
             return clusters.Select(c => new ClusterDto
             {

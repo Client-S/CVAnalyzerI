@@ -14,5 +14,6 @@ namespace CVAnalyzer.Core.Interfaces
         Task<IEnumerable<Student>> GetStudentsWithSkillsAsync();
         Task<IEnumerable<Student>> SearchBySkillAsync(string skill);
         Task<bool> StudentIdExistsAsync(string studentId);
+        void InvalidateStudentCache();
     }
 }

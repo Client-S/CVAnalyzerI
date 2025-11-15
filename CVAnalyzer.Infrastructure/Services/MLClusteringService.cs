@@ -254,15 +254,13 @@ namespace CVAnalyzer.Infrastructure.Services
                 }
             }
 
-            // Add skills from database that contain the search term
-            var allSkills = await _unitOfWork.Skills.GetAllAsync();
-            var matchingSkills = allSkills
-                .Where(s => s.SkillName.Contains(skill, StringComparison.OrdinalIgnoreCase) ||
-                           skill.Contains(s.SkillName, StringComparison.OrdinalIgnoreCase))
-                .Select(s => s.SkillName)
-                .Take(topN);
+            // Optimized: Query with filtering instead of loading all skills
+            var matchingSkills = await _unitOfWork.Skills.FindAsync(
+                s => s.SkillName.Contains(skill) || s.NormalizedName.Contains(normalizedSkill.ToUpper()));
 
-            similarSkills.UnionWith(matchingSkills);
+            similarSkills.UnionWith(matchingSkills
+                .Select(s => s.SkillName)
+                .Take(topN));
 
             return similarSkills.Take(topN).ToList();
         }
