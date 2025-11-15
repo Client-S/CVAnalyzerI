@@ -22,59 +22,56 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
+                _logger.LogInformation("Starting complete report generation");
+
                 // Load students with all related entities for export
-
                 var students = (await _unitOfWork.Students.FindAsync(
-
                     s => true,
-
                     include: q => q
-
                         .Include(s => s.StudentSkills)
-
                             .ThenInclude(ss => ss.Skill)
-
                         .Include(s => s.Experiences)
-
                         .Include(s => s.CVDocuments))).ToList();
 
-
+                _logger.LogInformation("Loaded {Count} students for export", students.Count);
 
                 // Load clusters with all related entities for export
-
                 var clusters = (await _unitOfWork.Clusters.FindAsync(
-
                     c => true,
-
                     include: q => q
-
                         .Include(c => c.Members)
-
                             .ThenInclude(m => m.Student)
-
                                 .ThenInclude(s => s.StudentSkills)
                                     .ThenInclude(ss => ss.Skill))).ToList();
 
-                using var wb = new XLWorkbook();
+                _logger.LogInformation("Loaded {Count} clusters for export", clusters.Count);
 
-                // Students worksheet
-                var wsStudents = wb.Worksheets.Add("Students");
-                CreateStudentsSheet(wsStudents, students);
+                // Create workbook and populate it
+                using (var wb = new XLWorkbook())
+                {
+                    // Students worksheet
+                    var wsStudents = wb.Worksheets.Add("Students");
+                    CreateStudentsSheet(wsStudents, students);
 
-                // Clusters worksheet
-                var wsClusters = wb.Worksheets.Add("Clusters");
-                CreateClustersSheet(wsClusters, clusters);
+                    // Clusters worksheet
+                    var wsClusters = wb.Worksheets.Add("Clusters");
+                    CreateClustersSheet(wsClusters, clusters);
 
-                // Save to memory stream
-                using var ms = new MemoryStream();
-                wb.SaveAs(ms);
-                ms.Position = 0;
-                return ms.ToArray();
+                    // Save to memory stream and return bytes
+                    using (var ms = new MemoryStream())
+                    {
+                        wb.SaveAs(ms);
+                        ms.Flush();
+                        var result = ms.ToArray();
+                        _logger.LogInformation("Report generated successfully. File size: {Size} bytes", result.Length);
+                        return result;
+                    }
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating Excel report");
-                throw;
+                _logger.LogError(ex, "Error generating Excel report. Error: {ErrorMessage}", ex.Message);
+                throw new InvalidOperationException($"Failed to generate report: {ex.Message}", ex);
             }
         }
 
@@ -82,35 +79,38 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
+                _logger.LogInformation("Starting student export");
+
                 // Load students with all related entities for export
-
                 var students = (await _unitOfWork.Students.FindAsync(
-
                     s => true,
-
                     include: q => q
-
                         .Include(s => s.StudentSkills)
-
                             .ThenInclude(ss => ss.Skill)
-
                         .Include(s => s.Experiences)
                         .Include(s => s.CVDocuments))).ToList();
 
-                using var wb = new XLWorkbook();
-                var ws = wb.Worksheets.Add("Students");
+                _logger.LogInformation("Loaded {Count} students for export", students.Count);
 
-                CreateStudentsSheet(ws, students);
+                using (var wb = new XLWorkbook())
+                {
+                    var ws = wb.Worksheets.Add("Students");
+                    CreateStudentsSheet(ws, students);
 
-                using var ms = new MemoryStream();
-                wb.SaveAs(ms);
-                ms.Position = 0;
-                return ms.ToArray();
+                    using (var ms = new MemoryStream())
+                    {
+                        wb.SaveAs(ms);
+                        ms.Flush();
+                        var result = ms.ToArray();
+                        _logger.LogInformation("Student export completed successfully. File size: {Size} bytes", result.Length);
+                        return result;
+                    }
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error exporting students to Excel");
-                throw;
+                _logger.LogError(ex, "Error exporting students to Excel. Error: {ErrorMessage}", ex.Message);
+                throw new InvalidOperationException($"Failed to export students: {ex.Message}", ex);
             }
         }
 
@@ -139,72 +139,75 @@ namespace CVAnalyzer.Infrastructure.Services
                 _logger.LogInformation("Cluster found: {ClusterName} with {MemberCount} members",
                     cluster.ClusterName, cluster.Members?.Count ?? 0);
 
-                using var wb = new XLWorkbook();
-                var ws = wb.Worksheets.Add("Cluster Details");
-
-                // Header information
-                ws.Cell(1, 1).Value = "Cluster Information";
-                ws.Cell(1, 1).Style.Font.Bold = true;
-                ws.Cell(1, 1).Style.Font.FontSize = 14;
-
-                ws.Cell(2, 1).Value = "Cluster Name";
-                ws.Cell(2, 2).Value = cluster.ClusterName;
-
-                ws.Cell(3, 1).Value = "Algorithm";
-                ws.Cell(3, 2).Value = cluster.Algorithm;
-
-                ws.Cell(4, 1).Value = "Member Count";
-                ws.Cell(4, 2).Value = cluster.MemberCount;
-
-                ws.Cell(5, 1).Value = "Created Date";
-                ws.Cell(5, 2).Value = cluster.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss");
-
-                // Members section
-                ws.Cell(7, 1).Value = "Cluster Members";
-                ws.Cell(7, 1).Style.Font.Bold = true;
-
-                var headerRow = 8;
-                ws.Cell(headerRow, 1).Value = "Student ID";
-                ws.Cell(headerRow, 2).Value = "Student Name";
-                ws.Cell(headerRow, 3).Value = "Email";
-                ws.Cell(headerRow, 4).Value = "Similarity Score";
-                ws.Cell(headerRow, 5).Value = "Matching Skills";
-
-                var headerRange = ws.Range(headerRow, 1, headerRow, 5);
-                headerRange.Style.Font.Bold = true;
-                headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
-
-                if (cluster.Members != null && cluster.Members.Any())
+                using (var wb = new XLWorkbook())
                 {
-                    _logger.LogInformation("Processing {Count} cluster members", cluster.Members.Count);
+                    var ws = wb.Worksheets.Add("Cluster Details");
 
-                    for (int i = 0; i < cluster.Members.Count; i++)
+                    // Header information
+                    ws.Cell(1, 1).Value = "Cluster Information";
+                    ws.Cell(1, 1).Style.Font.Bold = true;
+                    ws.Cell(1, 1).Style.Font.FontSize = 14;
+
+                    ws.Cell(2, 1).Value = "Cluster Name";
+                    ws.Cell(2, 2).Value = cluster.ClusterName;
+
+                    ws.Cell(3, 1).Value = "Algorithm";
+                    ws.Cell(3, 2).Value = cluster.Algorithm;
+
+                    ws.Cell(4, 1).Value = "Member Count";
+                    ws.Cell(4, 2).Value = cluster.MemberCount;
+
+                    ws.Cell(5, 1).Value = "Created Date";
+                    ws.Cell(5, 2).Value = cluster.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss");
+
+                    // Members section
+                    ws.Cell(7, 1).Value = "Cluster Members";
+                    ws.Cell(7, 1).Style.Font.Bold = true;
+
+                    var headerRow = 8;
+                    ws.Cell(headerRow, 1).Value = "Student ID";
+                    ws.Cell(headerRow, 2).Value = "Student Name";
+                    ws.Cell(headerRow, 3).Value = "Email";
+                    ws.Cell(headerRow, 4).Value = "Similarity Score";
+                    ws.Cell(headerRow, 5).Value = "Matching Skills";
+
+                    var headerRange = ws.Range(headerRow, 1, headerRow, 5);
+                    headerRange.Style.Font.Bold = true;
+                    headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
+
+                    if (cluster.Members != null && cluster.Members.Any())
                     {
-                        var row = headerRow + i + 1;
-                        var member = cluster.Members.ElementAt(i);
+                        _logger.LogInformation("Processing {Count} cluster members", cluster.Members.Count);
 
-                        ws.Cell(row, 1).Value = member.Student?.StudentId ?? string.Empty;
-                        ws.Cell(row, 2).Value = member.Student?.Name ?? string.Empty;
-                        ws.Cell(row, 3).Value = member.Student?.Email ?? string.Empty;
-                        ws.Cell(row, 4).Value = member.SimilarityScore;
-                        ws.Cell(row, 5).Value = member.MatchingSkills ?? string.Empty;
+                        for (int i = 0; i < cluster.Members.Count; i++)
+                        {
+                            var row = headerRow + i + 1;
+                            var member = cluster.Members.ElementAt(i);
+
+                            ws.Cell(row, 1).Value = member.Student?.StudentId ?? string.Empty;
+                            ws.Cell(row, 2).Value = member.Student?.Name ?? string.Empty;
+                            ws.Cell(row, 3).Value = member.Student?.Email ?? string.Empty;
+                            ws.Cell(row, 4).Value = member.SimilarityScore;
+                            ws.Cell(row, 5).Value = member.MatchingSkills ?? string.Empty;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Cluster has no members to export");
+                    }
+
+                    ws.Columns().AdjustToContents();
+
+                    _logger.LogInformation("Saving workbook to memory stream");
+                    using (var ms = new MemoryStream())
+                    {
+                        wb.SaveAs(ms);
+                        ms.Flush();
+                        var result = ms.ToArray();
+                        _logger.LogInformation("Cluster export completed successfully. File size: {Size} bytes", result.Length);
+                        return result;
                     }
                 }
-                else
-                {
-                    _logger.LogWarning("Cluster has no members to export");
-                }
-
-                ws.Columns().AdjustToContents();
-
-                _logger.LogInformation("Saving workbook to memory stream");
-                using var ms = new MemoryStream();
-                wb.SaveAs(ms);
-                ms.Position = 0;
-                var result = ms.ToArray();
-
-                _logger.LogInformation("Cluster export completed successfully. File size: {Size} bytes", result.Length);
-                return result;
             }
             catch (ArgumentException)
             {
@@ -222,59 +225,67 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
+                _logger.LogInformation("Starting skills report export");
+
                 // Load students with skills for the report
-
                 var students = (await _unitOfWork.Students.FindAsync(
-
                     s => true,
-
                     include: q => q
-
                         .Include(s => s.StudentSkills)
                             .ThenInclude(ss => ss.Skill))).ToList();
 
-                using var wb = new XLWorkbook();
-                var ws = wb.Worksheets.Add("Skills Report");
+                _logger.LogInformation("Loaded {Count} students for skills report", students.Count);
 
-                // Header
-                ws.Cell(1, 1).Value = "Skill";
-                ws.Cell(1, 2).Value = "Student Count";
-                ws.Cell(1, 3).Value = "Students";
-
-                var headerRange = ws.Range(1, 1, 1, 3);
-                headerRange.Style.Font.Bold = true;
-                headerRange.Style.Fill.BackgroundColor = XLColor.LightYellow;
-
-                // Group skills and count occurrences
-                var skillGroups = students
-                    .Where(s => s.StudentSkills != null && s.StudentSkills.Any())
-                    .SelectMany(s => s.StudentSkills.Select(ss => new { ss.Skill?.SkillName, s.Name, s.StudentId }))
-                    .Where(x => !string.IsNullOrEmpty(x.SkillName))
-                    .GroupBy(x => x.SkillName)
-                    .OrderByDescending(g => g.Count())
-                    .ToList();
-
-                for (int i = 0; i < skillGroups.Count; i++)
+                using (var wb = new XLWorkbook())
                 {
-                    var row = i + 2;
-                    var group = skillGroups[i];
+                    var ws = wb.Worksheets.Add("Skills Report");
 
-                    ws.Cell(row, 1).Value = group.Key;
-                    ws.Cell(row, 2).Value = group.Count();
-                    ws.Cell(row, 3).Value = string.Join(", ", group.Select(x => $"{x.StudentId} - {x.Name}"));
+                    // Header
+                    ws.Cell(1, 1).Value = "Skill";
+                    ws.Cell(1, 2).Value = "Student Count";
+                    ws.Cell(1, 3).Value = "Students";
+
+                    var headerRange = ws.Range(1, 1, 1, 3);
+                    headerRange.Style.Font.Bold = true;
+                    headerRange.Style.Fill.BackgroundColor = XLColor.LightYellow;
+
+                    // Group skills and count occurrences
+                    var skillGroups = students
+                        .Where(s => s.StudentSkills != null && s.StudentSkills.Any())
+                        .SelectMany(s => s.StudentSkills.Select(ss => new { ss.Skill?.SkillName, s.Name, s.StudentId }))
+                        .Where(x => !string.IsNullOrEmpty(x.SkillName))
+                        .GroupBy(x => x.SkillName)
+                        .OrderByDescending(g => g.Count())
+                        .ToList();
+
+                    _logger.LogInformation("Processing {Count} skill groups", skillGroups.Count);
+
+                    for (int i = 0; i < skillGroups.Count; i++)
+                    {
+                        var row = i + 2;
+                        var group = skillGroups[i];
+
+                        ws.Cell(row, 1).Value = group.Key;
+                        ws.Cell(row, 2).Value = group.Count();
+                        ws.Cell(row, 3).Value = string.Join(", ", group.Select(x => $"{x.StudentId} - {x.Name}"));
+                    }
+
+                    ws.Columns().AdjustToContents();
+
+                    using (var ms = new MemoryStream())
+                    {
+                        wb.SaveAs(ms);
+                        ms.Flush();
+                        var result = ms.ToArray();
+                        _logger.LogInformation("Skills report export completed successfully. File size: {Size} bytes", result.Length);
+                        return result;
+                    }
                 }
-
-                ws.Columns().AdjustToContents();
-
-                using var ms = new MemoryStream();
-                wb.SaveAs(ms);
-                ms.Position = 0;
-                return ms.ToArray();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error exporting skills report");
-                throw;
+                _logger.LogError(ex, "Error exporting skills report. Error: {ErrorMessage}", ex.Message);
+                throw new InvalidOperationException($"Failed to export skills report: {ex.Message}", ex);
             }
         }
 
