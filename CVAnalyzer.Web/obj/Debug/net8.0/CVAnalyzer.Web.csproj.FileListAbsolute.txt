@@ -419,7 +419,6 @@ C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.AssemblyInfoInputs.cache
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.AssemblyInfo.cs
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.csproj.CoreCompileInputs.cache
-C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.MvcApplicationPartsAssemblyInfo.cs
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.MvcApplicationPartsAssemblyInfo.cache
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.RazorAssemblyInfo.cache
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.RazorAssemblyInfo.cs
@@ -605,6 +604,7 @@ C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\bin\Debug\net8.0\CVAnalyzer.Infr
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\bin\Debug\net8.0\CVAnalyzer.Application.pdb
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\bin\Debug\net8.0\CVAnalyzer.Infrastructure.pdb
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\bin\Debug\net8.0\CVAnalyzer.Core.pdb
+C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.MvcApplicationPartsAssemblyInfo.cs
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\rjimswa.dswa.cache.json
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
@@ -615,7 +615,6 @@ C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\staticwebassets
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\staticwebassets.development.json
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyz.F0A03153.Up2Date
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\CVAnalyzer.Web.dll
 C:\Project\HubX\HubX\CVAnalyzerI\CVAnalyzer.Web\obj\Debug\net8.0\refint\CVAnalyzer.Web.dll
