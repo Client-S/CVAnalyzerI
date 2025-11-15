@@ -48,6 +48,24 @@ namespace CVAnalyzer.Web.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Export()
+        {
+            try
+            {
+                var fileBytes = await _exportService.GenerateReportAsync();
+                var fileName = $"Complete_Report_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating complete report");
+                TempData["ErrorMessage"] = "Error generating complete report.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpGet]
         public async Task<IActionResult> ExportStudents()
         {
             try

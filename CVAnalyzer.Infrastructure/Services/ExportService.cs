@@ -53,10 +53,9 @@ namespace CVAnalyzer.Infrastructure.Services
                             .ThenInclude(m => m.Student)
 
                                 .ThenInclude(s => s.StudentSkills)
-
                                     .ThenInclude(ss => ss.Skill))).ToList();
 
-                var wb = new XLWorkbook();
+                using var wb = new XLWorkbook();
 
                 // Students worksheet
                 var wsStudents = wb.Worksheets.Add("Students");
@@ -96,9 +95,9 @@ namespace CVAnalyzer.Infrastructure.Services
                             .ThenInclude(ss => ss.Skill)
 
                         .Include(s => s.Experiences)
-
                         .Include(s => s.CVDocuments))).ToList();
-                var wb = new XLWorkbook();
+
+                using var wb = new XLWorkbook();
                 var ws = wb.Worksheets.Add("Students");
 
                 CreateStudentsSheet(ws, students);
@@ -141,7 +140,7 @@ namespace CVAnalyzer.Infrastructure.Services
                 if (cluster == null)
                     throw new ArgumentException($"Cluster with ID {clusterId} not found");
 
-                var wb = new XLWorkbook();
+                using var wb = new XLWorkbook();
                 var ws = wb.Worksheets.Add("Cluster Details");
 
                 // Header information
@@ -218,9 +217,9 @@ namespace CVAnalyzer.Infrastructure.Services
                     include: q => q
 
                         .Include(s => s.StudentSkills)
-
                             .ThenInclude(ss => ss.Skill))).ToList();
-                var wb = new XLWorkbook();
+
+                using var wb = new XLWorkbook();
                 var ws = wb.Worksheets.Add("Skills Report");
 
                 // Header
