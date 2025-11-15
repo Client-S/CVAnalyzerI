@@ -86,14 +86,23 @@ namespace CVAnalyzer.Infrastructure.Services
                 if (studentFeatures.Count == 0)
                     throw new InvalidOperationException("No feature vectors could be created for clustering");
 
-                // Prepare data for ML.NET
+                // Get the feature vector size (all vectors have the same size)
+                var featureVectorSize = studentFeatures.First().SkillVector.Length;
+                _logger.LogInformation("Feature vector size: {Size}", featureVectorSize);
+
+                // Create explicit schema definition to specify fixed-size vector
+                var schemaDefinition = SchemaDefinition.Create(typeof(StudentClusterData));
+                schemaDefinition["Features"].ColumnType = new VectorDataViewType(NumberDataViewType.Single, featureVectorSize);
+
+                // Prepare data for ML.NET with explicit schema
                 var trainingData = _mlContext.Data.LoadFromEnumerable(
                     studentFeatures.Select(sf => new StudentClusterData
                     {
                         Features = sf.SkillVector
-                    }));
+                    }),
+                    schemaDefinition);
 
-                // Build K-Means clustering pipeline - Features is already a vector, no need to concatenate
+                // Build K-Means clustering pipeline
                 var pipeline = _mlContext.Clustering.Trainers.KMeans(
                     featureColumnName: "Features",
                     numberOfClusters: numberOfClusters);
