@@ -55,22 +55,21 @@ namespace CVAnalyzer.Infrastructure.Services
                                 .ThenInclude(s => s.StudentSkills)
                                     .ThenInclude(ss => ss.Skill))).ToList();
 
-                using (var wb = new XLWorkbook())
-                {
-                    // Students worksheet
-                    var wsStudents = wb.Worksheets.Add("Students");
-                    CreateStudentsSheet(wsStudents, students);
+                using var wb = new XLWorkbook();
 
-                    // Clusters worksheet
-                    var wsClusters = wb.Worksheets.Add("Clusters");
-                    CreateClustersSheet(wsClusters, clusters);
+                // Students worksheet
+                var wsStudents = wb.Worksheets.Add("Students");
+                CreateStudentsSheet(wsStudents, students);
 
-                    // Save to memory stream
-                    using var ms = new MemoryStream();
-                    wb.SaveAs(ms);
-                    ms.Position = 0;
-                    return ms.ToArray();
-                }
+                // Clusters worksheet
+                var wsClusters = wb.Worksheets.Add("Clusters");
+                CreateClustersSheet(wsClusters, clusters);
+
+                // Save to memory stream
+                using var ms = new MemoryStream();
+                wb.SaveAs(ms);
+                ms.Position = 0;
+                return ms.ToArray();
             }
             catch (Exception ex)
             {
@@ -98,17 +97,15 @@ namespace CVAnalyzer.Infrastructure.Services
                         .Include(s => s.Experiences)
                         .Include(s => s.CVDocuments))).ToList();
 
-                using (var wb = new XLWorkbook())
-                {
-                    var ws = wb.Worksheets.Add("Students");
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("Students");
 
-                    CreateStudentsSheet(ws, students);
+                CreateStudentsSheet(ws, students);
 
-                    using var ms = new MemoryStream();
-                    wb.SaveAs(ms);
-                    ms.Position = 0;
-                    return ms.ToArray();
-                }
+                using var ms = new MemoryStream();
+                wb.SaveAs(ms);
+                ms.Position = 0;
+                return ms.ToArray();
             }
             catch (Exception ex)
             {
@@ -143,64 +140,62 @@ namespace CVAnalyzer.Infrastructure.Services
                 if (cluster == null)
                     throw new ArgumentException($"Cluster with ID {clusterId} not found");
 
-                using (var wb = new XLWorkbook())
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("Cluster Details");
+
+                // Header information
+                ws.Cell(1, 1).Value = "Cluster Information";
+                ws.Cell(1, 1).Style.Font.Bold = true;
+                ws.Cell(1, 1).Style.Font.FontSize = 14;
+
+                ws.Cell(2, 1).Value = "Cluster Name";
+                ws.Cell(2, 2).Value = cluster.ClusterName;
+
+                ws.Cell(3, 1).Value = "Algorithm";
+                ws.Cell(3, 2).Value = cluster.Algorithm;
+
+                ws.Cell(4, 1).Value = "Member Count";
+                ws.Cell(4, 2).Value = cluster.MemberCount;
+
+                ws.Cell(5, 1).Value = "Created Date";
+                ws.Cell(5, 2).Value = cluster.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss");
+
+                // Members section
+                ws.Cell(7, 1).Value = "Cluster Members";
+                ws.Cell(7, 1).Style.Font.Bold = true;
+
+                var headerRow = 8;
+                ws.Cell(headerRow, 1).Value = "Student ID";
+                ws.Cell(headerRow, 2).Value = "Student Name";
+                ws.Cell(headerRow, 3).Value = "Email";
+                ws.Cell(headerRow, 4).Value = "Similarity Score";
+                ws.Cell(headerRow, 5).Value = "Matching Skills";
+
+                var headerRange = ws.Range(headerRow, 1, headerRow, 5);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
+
+                if (cluster.Members != null && cluster.Members.Any())
                 {
-                    var ws = wb.Worksheets.Add("Cluster Details");
-
-                    // Header information
-                    ws.Cell(1, 1).Value = "Cluster Information";
-                    ws.Cell(1, 1).Style.Font.Bold = true;
-                    ws.Cell(1, 1).Style.Font.FontSize = 14;
-
-                    ws.Cell(2, 1).Value = "Cluster Name";
-                    ws.Cell(2, 2).Value = cluster.ClusterName;
-
-                    ws.Cell(3, 1).Value = "Algorithm";
-                    ws.Cell(3, 2).Value = cluster.Algorithm;
-
-                    ws.Cell(4, 1).Value = "Member Count";
-                    ws.Cell(4, 2).Value = cluster.MemberCount;
-
-                    ws.Cell(5, 1).Value = "Created Date";
-                    ws.Cell(5, 2).Value = cluster.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss");
-
-                    // Members section
-                    ws.Cell(7, 1).Value = "Cluster Members";
-                    ws.Cell(7, 1).Style.Font.Bold = true;
-
-                    var headerRow = 8;
-                    ws.Cell(headerRow, 1).Value = "Student ID";
-                    ws.Cell(headerRow, 2).Value = "Student Name";
-                    ws.Cell(headerRow, 3).Value = "Email";
-                    ws.Cell(headerRow, 4).Value = "Similarity Score";
-                    ws.Cell(headerRow, 5).Value = "Matching Skills";
-
-                    var headerRange = ws.Range(headerRow, 1, headerRow, 5);
-                    headerRange.Style.Font.Bold = true;
-                    headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
-
-                    if (cluster.Members != null && cluster.Members.Any())
+                    for (int i = 0; i < cluster.Members.Count; i++)
                     {
-                        for (int i = 0; i < cluster.Members.Count; i++)
-                        {
-                            var row = headerRow + i + 1;
-                            var member = cluster.Members.ElementAt(i);
+                        var row = headerRow + i + 1;
+                        var member = cluster.Members.ElementAt(i);
 
-                            ws.Cell(row, 1).Value = member.Student?.StudentId ?? string.Empty;
-                            ws.Cell(row, 2).Value = member.Student?.Name ?? string.Empty;
-                            ws.Cell(row, 3).Value = member.Student?.Email ?? string.Empty;
-                            ws.Cell(row, 4).Value = member.SimilarityScore;
-                            ws.Cell(row, 5).Value = member.MatchingSkills ?? string.Empty;
-                        }
+                        ws.Cell(row, 1).Value = member.Student?.StudentId ?? string.Empty;
+                        ws.Cell(row, 2).Value = member.Student?.Name ?? string.Empty;
+                        ws.Cell(row, 3).Value = member.Student?.Email ?? string.Empty;
+                        ws.Cell(row, 4).Value = member.SimilarityScore;
+                        ws.Cell(row, 5).Value = member.MatchingSkills ?? string.Empty;
                     }
-
-                    ws.Columns().AdjustToContents();
-
-                    using var ms = new MemoryStream();
-                    wb.SaveAs(ms);
-                    ms.Position = 0;
-                    return ms.ToArray();
                 }
+
+                ws.Columns().AdjustToContents();
+
+                using var ms = new MemoryStream();
+                wb.SaveAs(ms);
+                ms.Position = 0;
+                return ms.ToArray();
             }
             catch (Exception ex)
             {
@@ -224,45 +219,43 @@ namespace CVAnalyzer.Infrastructure.Services
                         .Include(s => s.StudentSkills)
                             .ThenInclude(ss => ss.Skill))).ToList();
 
-                using (var wb = new XLWorkbook())
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("Skills Report");
+
+                // Header
+                ws.Cell(1, 1).Value = "Skill";
+                ws.Cell(1, 2).Value = "Student Count";
+                ws.Cell(1, 3).Value = "Students";
+
+                var headerRange = ws.Range(1, 1, 1, 3);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.LightYellow;
+
+                // Group skills and count occurrences
+                var skillGroups = students
+                    .Where(s => s.StudentSkills != null && s.StudentSkills.Any())
+                    .SelectMany(s => s.StudentSkills.Select(ss => new { ss.Skill?.SkillName, s.Name, s.StudentId }))
+                    .Where(x => !string.IsNullOrEmpty(x.SkillName))
+                    .GroupBy(x => x.SkillName)
+                    .OrderByDescending(g => g.Count())
+                    .ToList();
+
+                for (int i = 0; i < skillGroups.Count; i++)
                 {
-                    var ws = wb.Worksheets.Add("Skills Report");
+                    var row = i + 2;
+                    var group = skillGroups[i];
 
-                    // Header
-                    ws.Cell(1, 1).Value = "Skill";
-                    ws.Cell(1, 2).Value = "Student Count";
-                    ws.Cell(1, 3).Value = "Students";
-
-                    var headerRange = ws.Range(1, 1, 1, 3);
-                    headerRange.Style.Font.Bold = true;
-                    headerRange.Style.Fill.BackgroundColor = XLColor.LightYellow;
-
-                    // Group skills and count occurrences
-                    var skillGroups = students
-                        .Where(s => s.StudentSkills != null && s.StudentSkills.Any())
-                        .SelectMany(s => s.StudentSkills.Select(ss => new { ss.Skill?.SkillName, s.Name, s.StudentId }))
-                        .Where(x => !string.IsNullOrEmpty(x.SkillName))
-                        .GroupBy(x => x.SkillName)
-                        .OrderByDescending(g => g.Count())
-                        .ToList();
-
-                    for (int i = 0; i < skillGroups.Count; i++)
-                    {
-                        var row = i + 2;
-                        var group = skillGroups[i];
-
-                        ws.Cell(row, 1).Value = group.Key;
-                        ws.Cell(row, 2).Value = group.Count();
-                        ws.Cell(row, 3).Value = string.Join(", ", group.Select(x => $"{x.StudentId} - {x.Name}"));
-                    }
-
-                    ws.Columns().AdjustToContents();
-
-                    using var ms = new MemoryStream();
-                    wb.SaveAs(ms);
-                    ms.Position = 0;
-                    return ms.ToArray();
+                    ws.Cell(row, 1).Value = group.Key;
+                    ws.Cell(row, 2).Value = group.Count();
+                    ws.Cell(row, 3).Value = string.Join(", ", group.Select(x => $"{x.StudentId} - {x.Name}"));
                 }
+
+                ws.Columns().AdjustToContents();
+
+                using var ms = new MemoryStream();
+                wb.SaveAs(ms);
+                ms.Position = 0;
+                return ms.ToArray();
             }
             catch (Exception ex)
             {
