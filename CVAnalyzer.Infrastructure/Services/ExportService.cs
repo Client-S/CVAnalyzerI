@@ -118,27 +118,26 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
+                _logger.LogInformation("Starting cluster export for ClusterId: {ClusterId}", clusterId);
+
                 // Load cluster with all related entities for export
-
                 var clusterData = await _unitOfWork.Clusters.FindAsync(
-
                     c => c.Id == clusterId,
-
                     include: q => q
-
                         .Include(c => c.Members)
-
                             .ThenInclude(m => m.Student)
-
                                 .ThenInclude(s => s.StudentSkills)
-
                                     .ThenInclude(ss => ss.Skill));
-
-
 
                 var cluster = clusterData.FirstOrDefault();
                 if (cluster == null)
+                {
+                    _logger.LogWarning("Cluster with ID {ClusterId} not found", clusterId);
                     throw new ArgumentException($"Cluster with ID {clusterId} not found");
+                }
+
+                _logger.LogInformation("Cluster found: {ClusterName} with {MemberCount} members",
+                    cluster.ClusterName, cluster.Members?.Count ?? 0);
 
                 using var wb = new XLWorkbook();
                 var ws = wb.Worksheets.Add("Cluster Details");
@@ -177,6 +176,8 @@ namespace CVAnalyzer.Infrastructure.Services
 
                 if (cluster.Members != null && cluster.Members.Any())
                 {
+                    _logger.LogInformation("Processing {Count} cluster members", cluster.Members.Count);
+
                     for (int i = 0; i < cluster.Members.Count; i++)
                     {
                         var row = headerRow + i + 1;
@@ -189,18 +190,31 @@ namespace CVAnalyzer.Infrastructure.Services
                         ws.Cell(row, 5).Value = member.MatchingSkills ?? string.Empty;
                     }
                 }
+                else
+                {
+                    _logger.LogWarning("Cluster has no members to export");
+                }
 
                 ws.Columns().AdjustToContents();
 
+                _logger.LogInformation("Saving workbook to memory stream");
                 using var ms = new MemoryStream();
                 wb.SaveAs(ms);
                 ms.Position = 0;
-                return ms.ToArray();
+                var result = ms.ToArray();
+
+                _logger.LogInformation("Cluster export completed successfully. File size: {Size} bytes", result.Length);
+                return result;
+            }
+            catch (ArgumentException)
+            {
+                throw; // Re-throw cluster not found exception
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error exporting cluster {ClusterId} to Excel", clusterId);
-                throw;
+                _logger.LogError(ex, "Error exporting cluster {ClusterId} to Excel. Error: {ErrorMessage}",
+                    clusterId, ex.Message);
+                throw new InvalidOperationException($"Failed to export cluster {clusterId}: {ex.Message}", ex);
             }
         }
 
