@@ -46,6 +46,8 @@ namespace CVAnalyzer.Infrastructure.Data
                 entity.Property(e => e.NormalizedName).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Category).HasMaxLength(100);
                 entity.HasIndex(e => e.NormalizedName).IsUnique();
+                entity.HasIndex(e => e.SkillName); // For skill search queries
+                entity.HasIndex(e => e.Category); // For category filtering
             });
 
             // StudentSkill Configuration (Many-to-Many)
@@ -66,6 +68,13 @@ namespace CVAnalyzer.Infrastructure.Data
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(e => new { e.StudentId, e.SkillId });
+                entity.HasIndex(e => e.SkillId);
+
+                modelBuilder.Entity<StudentSkill>()
+                    .HasIndex(ss => ss.StudentId);
+
+                modelBuilder.Entity<StudentSkill>()
+                    .HasIndex(ss => ss.SkillId);
             });
 
             // Experience Configuration
@@ -80,6 +89,7 @@ namespace CVAnalyzer.Infrastructure.Data
                     .WithMany(s => s.Experiences)
                     .HasForeignKey(e => e.StudentId)
                     .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(e => e.StudentId);
             });
 
             // CVDocument Configuration
@@ -97,7 +107,10 @@ namespace CVAnalyzer.Infrastructure.Data
                     .HasForeignKey(e => e.StudentId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                entity.HasIndex(e => e.StudentId);
                 entity.HasIndex(e => e.ProcessingStatus);
+                entity.HasIndex(e => e.UploadDate); // For date range queries
+                entity.HasIndex(e => new { e.StudentId, e.UploadDate }); // Composite for time-based filtering
             });
 
             // StudentCluster Configuration
@@ -111,6 +124,9 @@ namespace CVAnalyzer.Infrastructure.Data
                     .WithMany()
                     .HasForeignKey(e => e.CreatedByUserId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.CreatedDate); // For recent clusters queries
+                entity.HasIndex(e => new { e.CreatedByUserId, e.CreatedDate }); // By user and date
             });
 
             // ClusterMember Configuration
@@ -129,6 +145,9 @@ namespace CVAnalyzer.Infrastructure.Data
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(e => new { e.ClusterId, e.StudentId }).IsUnique();
+
+                modelBuilder.Entity<ClusterMember>()
+                    .HasIndex(cm => cm.ClusterId);
             });
 
             // AuditLog Configuration
@@ -147,6 +166,8 @@ namespace CVAnalyzer.Infrastructure.Data
 
                 entity.HasIndex(e => e.Timestamp);
                 entity.HasIndex(e => new { e.UserId, e.Timestamp });
+                entity.HasIndex(e => e.EntityId); // For entity-specific audits
+                entity.HasIndex(e => new { e.EntityType, e.EntityId }); // Composite for entity lookups
             });
 
             // ApplicationUser additional configuration

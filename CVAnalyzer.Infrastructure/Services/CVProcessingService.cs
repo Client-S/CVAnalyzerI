@@ -3,6 +3,7 @@ using CVAnalyzer.Application.Services;
 using CVAnalyzer.Core.Entities;
 using CVAnalyzer.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -55,6 +56,8 @@ namespace CVAnalyzer.Infrastructure.Services
                 FileName = file.FileName
             };
 
+            // Start a transaction to avoid partial commits
+            await _unitOfWork.BeginTransactionAsync();
             try
             {
                 // Validate file
@@ -63,6 +66,7 @@ namespace CVAnalyzer.Infrastructure.Services
                 {
                     result.Success = false;
                     result.Message = validation.ErrorMessage;
+                    await _unitOfWork.RollbackTransactionAsync();
                     return result;
                 }
 
@@ -88,6 +92,10 @@ namespace CVAnalyzer.Infrastructure.Services
                     await _unitOfWork.SaveChangesAsync();
                 }
 
+                // Ensure navigation collections exist
+                student.StudentSkills ??= new List<StudentSkill>();
+                student.Experiences ??= new List<Experience>();
+
                 // Save file
                 var fileExtension = Path.GetExtension(file.FileName);
                 var filePath = await _fileStorage.SaveFileAsync(file, student.StudentId);
@@ -111,44 +119,165 @@ namespace CVAnalyzer.Infrastructure.Services
                 using var stream = file.OpenReadStream();
                 var extractedData = await _parserService.ParseAsync(stream, file.FileName, fileExtension);
 
-                // Process extracted skills
-                var extractedSkills = new List<string>();
-                foreach (var skillName in extractedData.Skills)
-                {
-                    var normalizedName = skillName.ToUpper().Replace(" ", "");
-                    var skill = (await _unitOfWork.Skills.FindAsync(s => s.NormalizedName == normalizedName))
-                        .FirstOrDefault();
+                // Process extracted skills - OPTIMIZED to batch database operations
 
-                    if (skill == null)
+                var extractedSkills = new List<string>();
+
+
+
+                // Step 1: Normalize all skill names
+
+                var normalizedSkillMap = extractedData.Skills
+
+                    .Select(skillName => new
+
                     {
-                        skill = new Skill
+
+                        OriginalName = skillName,
+
+                        NormalizedName = skillName.ToUpper().Replace(" ", "")
+
+                    })
+
+                    .ToList();
+
+
+
+                // Step 2: Batch lookup existing skills (single query)
+
+                var normalizedNames = normalizedSkillMap.Select(x => x.NormalizedName).ToList();
+
+                var existingSkills = (await _unitOfWork.Skills.FindAsync(
+
+                    s => normalizedNames.Contains(s.NormalizedName)))
+
+                    .ToDictionary(s => s.NormalizedName, s => s);
+
+
+
+                // Step 3: Collect new skills to add
+
+                var newSkills = new List<Skill>();
+
+                foreach (var skillMap in normalizedSkillMap)
+
+                {
+
+                    if (!existingSkills.ContainsKey(skillMap.NormalizedName))
+
+                    {
+
+                        var newSkill = new Skill
+
                         {
-                            SkillName = skillName,
-                            NormalizedName = normalizedName,
-                            Category = "Technical", // Default category
+
+                            SkillName = skillMap.OriginalName,
+
+                            NormalizedName = skillMap.NormalizedName,
+
+                            Category = "Technical",
+
                             CreatedDate = DateTime.UtcNow
+
                         };
-                        await _unitOfWork.Skills.AddAsync(skill);
-                        await _unitOfWork.SaveChangesAsync();
+
+                        newSkills.Add(newSkill);
+
+                        existingSkills[skillMap.NormalizedName] = newSkill;
+
                     }
 
-                    // Add to student skills if not already present
+                }
+
+
+
+                // Step 4: Add all new skills at once
+
+                if (newSkills.Any())
+
+                {
+
+                    foreach (var newSkill in newSkills)
+
+                    {
+
+                        await _unitOfWork.Skills.AddAsync(newSkill);
+
+                    }
+
+                    await _unitOfWork.SaveChangesAsync(); // Single save for all skills
+
+                }
+
+
+
+                // Step 5: Collect new StudentSkills to add
+
+                var newStudentSkills = new List<StudentSkill>();
+
+                foreach (var skillMap in normalizedSkillMap)
+
+                {
+
+                    var skill = existingSkills[skillMap.NormalizedName];
+
+
+
+                    // Check if StudentSkill already exists
+
                     var existingStudentSkill = student.StudentSkills
+
                         .FirstOrDefault(ss => ss.SkillId == skill.Id);
 
+
+
                     if (existingStudentSkill == null)
+
                     {
+
                         var studentSkill = new StudentSkill
+
                         {
+
                             StudentId = student.Id,
+
                             SkillId = skill.Id,
-                            ExtractedText = skillName,
-                            ConfidenceScore = 0.8 // Default confidence
+
+                            ExtractedText = skillMap.OriginalName,
+
+                            ConfidenceScore = 0.8
+
                         };
-                        await _unitOfWork.SaveChangesAsync();
+
+                        newStudentSkills.Add(studentSkill);
+
+                        student.StudentSkills.Add(studentSkill);
+
                     }
 
-                    extractedSkills.Add(skillName);
+
+
+                    extractedSkills.Add(skillMap.OriginalName);
+
+                }
+
+
+
+                // Step 6: Add all new StudentSkills at once
+
+                if (newStudentSkills.Any())
+
+                {
+
+                    foreach (var studentSkill in newStudentSkills)
+
+                    {
+
+                        await _unitOfWork.StudentSkills.AddAsync(studentSkill);
+
+                    }
+
+                    await _unitOfWork.SaveChangesAsync(); // Single save for all StudentSkills
                 }
 
                 // Process extracted experiences
@@ -190,6 +319,8 @@ namespace CVAnalyzer.Infrastructure.Services
                 await _auditService.LogAsync("UploadCV", "CVDocument", cvDocument.Id.ToString(),
                     new { StudentId = studentId, FileName = file.FileName });
 
+                await _unitOfWork.CommitTransactionAsync();
+
                 result.Success = true;
                 result.Message = "CV processed successfully";
                 result.StudentId = student.Id;
@@ -201,6 +332,7 @@ namespace CVAnalyzer.Infrastructure.Services
             }
             catch (Exception ex)
             {
+                try { await _unitOfWork.RollbackTransactionAsync(); } catch { /* ignore */ }
                 _logger.LogError(ex, "Error processing CV: {FileName}", file.FileName);
                 result.Success = false;
                 result.Message = "Error processing CV";
@@ -283,7 +415,13 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<List<CVDocumentDto>> GetStudentCVsAsync(int studentId)
         {
-            var cvDocuments = await _unitOfWork.CVDocuments.FindAsync(cv => cv.StudentId == studentId);
+            // Load CV documents with Student navigation property to prevent N+1 queries
+
+            var cvDocuments = await _unitOfWork.CVDocuments.FindAsync(
+
+                cv => cv.StudentId == studentId,
+
+                include: q => q.Include(cv => cv.Student));
 
             return cvDocuments.Select(cv => new CVDocumentDto
             {
@@ -329,7 +467,7 @@ namespace CVAnalyzer.Infrastructure.Services
 
         private (bool IsValid, string ErrorMessage) ValidateFile(IFormFile file)
         {
-            var maxFileSize = _configuration.GetValue<long>("FileUpload:MaxFileSize", 10485760); // 10MB default
+            var maxFileSize = _configuration.GetValue<long>("FileUpload:MaxFileSize", 10485760);
             var allowedExtensions = _configuration.GetSection("FileUpload:AllowedExtensions").Get<string[]>()
                 ?? new[] { ".pdf", ".docx" };
 
@@ -337,16 +475,20 @@ namespace CVAnalyzer.Infrastructure.Services
                 return (false, "File is empty");
 
             if (file.Length > maxFileSize)
-                return (false, $"File size exceeds maximum allowed size of {maxFileSize / 1024 / 1024}MB");
+                return (false, $"File size exceeds {maxFileSize / 1024 / 1024}MB limit");
 
             var extension = Path.GetExtension(file.FileName).ToLower();
             if (!allowedExtensions.Contains(extension))
-                return (false, $"File type {extension} is not allowed. Allowed types: {string.Join(", ", allowedExtensions)}");
+                return (false, $"File type {extension} not allowed");
+
+            // Check MIME type (basic)
+            var validMimes = new[] { "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
+            if (!validMimes.Contains(file.ContentType ?? ""))
+                return (false, "Invalid file MIME type");
 
             return (true, string.Empty);
         }
 
-        // Helper method to get current user ID
         private string GetCurrentUserId()
         {
             var httpContext = _httpContextAccessor.HttpContext;

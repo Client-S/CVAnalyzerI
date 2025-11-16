@@ -3,6 +3,7 @@ using CVAnalyzer.Application.Services;
 using CVAnalyzer.Core.Entities;
 using CVAnalyzer.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -34,7 +35,13 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<List<ClusterDto>> GetAllClustersAsync()
         {
-            var clusters = await _unitOfWork.Clusters.GetAllAsync();
+            var clusters = await _unitOfWork.Clusters.FindAsync(
+                c => true,
+                include: q => q
+                    .Include(c => c.Members)
+                        .ThenInclude(m => m.Student)
+                            .ThenInclude(s => s.StudentSkills)
+                                .ThenInclude(ss => ss.Skill));
 
             return clusters.Select(c => new ClusterDto
             {
@@ -49,30 +56,60 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<ClusterDetailDto?> GetClusterDetailsAsync(int clusterId)
         {
-            var cluster = await _unitOfWork.Clusters.GetByIdAsync(clusterId);
+            var clusterMembers = await _unitOfWork.Clusters.FindAsync(
+
+               c => c.Id == clusterId,
+
+               include: q => q
+
+                   .Include(c => c.Members)
+
+                       .ThenInclude(m => m.Student)
+
+                           .ThenInclude(s => s.StudentSkills)
+
+                               .ThenInclude(ss => ss.Skill));
+
+
+
+            var cluster = clusterMembers.FirstOrDefault();
+
             if (cluster == null) return null;
 
-            var clusterMembers = await _unitOfWork.Clusters.FindAsync(c => c.Id == clusterId);
-            var fullCluster = clusterMembers.FirstOrDefault();
 
-            if (fullCluster == null) return null;
 
             return new ClusterDetailDto
+
             {
-                Id = fullCluster.Id,
-                ClusterName = fullCluster.ClusterName,
-                Description = fullCluster.Description,
-                CommonSkills = ExtractCommonSkills(fullCluster.Members.ToList()),
-                Students = fullCluster.Members.Select(m => new ClusterStudentDto
+
+                Id = cluster.Id,
+
+                ClusterName = cluster.ClusterName,
+
+                Description = cluster.Description,
+
+                CommonSkills = ExtractCommonSkills(cluster.Members.ToList()),
+
+                Students = cluster.Members.Select(m => new ClusterStudentDto
+
                 {
+
                     StudentId = m.Student.Id,
+
                     StudentNo = m.Student.StudentId,
+
                     Name = m.Student.Name,
+
                     Email = m.Student.Email,
+
                     Skills = m.Student.StudentSkills.Select(ss => ss.Skill.SkillName).ToList(),
+
                     SimilarityScore = m.SimilarityScore
+
                 }).ToList(),
-                CreatedDate = fullCluster.CreatedDate
+
+                CreatedDate = cluster.CreatedDate
+
             };
         }
 
@@ -119,9 +156,10 @@ namespace CVAnalyzer.Infrastructure.Services
                         SimilarityScore = similarityScore,
                         MatchingSkills = string.Join(",", matchingSkills)
                     };
-
-                    await _unitOfWork.SaveChangesAsync();
+                    cluster.Members.Add(member);
+                   
                 }
+                await _unitOfWork.SaveChangesAsync();
 
                 await _auditService.LogAsync("CreateCluster", "Cluster", cluster.Id.ToString(),
                     new { ClusterName = clusterName, StudentCount = students.Count });
@@ -158,7 +196,10 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<List<ClusterStudentDto>> FindSimilarStudentsAsync(int studentId, int count = 5)
         {
-            var targetStudent = await _unitOfWork.Students.GetByIdAsync(studentId);
+            // Use GetByIdWithDetailsAsync to load StudentSkills with Skill entities
+
+            var targetStudent = await _unitOfWork.Students.GetByIdWithDetailsAsync(studentId);
+
             if (targetStudent == null) return new List<ClusterStudentDto>();
 
             var allStudents = (await _unitOfWork.Students.GetStudentsWithSkillsAsync())

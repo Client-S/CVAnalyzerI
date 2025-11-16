@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CVAnalyzer.Web.Controllers
 {
-    //[Authorize]
+    [Authorize]
     public class DashboardController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -75,7 +75,7 @@ namespace CVAnalyzer.Web.Controllers
                     .Select(cv => new
                     {
                         action = "CV Uploaded",
-                        student = cv.Student.Name ?? "Unknown",
+                        student = cv.Student?.Name ?? "Unknown",
                         date = cv.UploadDate.ToString("MMM dd, yyyy HH:mm"),
                         status = cv.ProcessingStatus
                     });

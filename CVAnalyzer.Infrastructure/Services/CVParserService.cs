@@ -8,6 +8,7 @@ using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -48,17 +49,60 @@ namespace CVAnalyzer.Infrastructure.Services
             {
                 try
                 {
-                    using var pdfReader = new PdfReader(fileStream);
+                    // Normalize input stream: ensure iText reads from the start and we don't depend on caller's stream position.
+                    Stream pdfStream = fileStream;
+                    if (fileStream == null)
+                        throw new ArgumentNullException(nameof(fileStream));
+
+                    if (!fileStream.CanSeek || fileStream.Position != 0)
+                    {
+                        var ms = new MemoryStream();
+                        try
+                        {
+                            if (fileStream.CanSeek)
+                                fileStream.Position = 0;
+                        }
+                        catch { /* ignore */ }
+
+                        fileStream.CopyTo(ms);
+                        ms.Position = 0;
+                        pdfStream = ms;
+                    }
+
+                    using var pdfReader = new PdfReader(pdfStream);
                     using var pdfDocument = new PdfDocument(pdfReader);
 
                     var text = new StringBuilder();
 
-                    for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+                    var pageCount = pdfDocument.GetNumberOfPages();
+                    for (int i = 1; i <= pageCount; i++)
                     {
                         var page = pdfDocument.GetPage(i);
                         var strategy = new LocationTextExtractionStrategy();
-                        var pageText = PdfTextExtractor.GetTextFromPage(page, strategy);
-                        text.AppendLine(pageText);
+
+                        string pageText = string.Empty;
+                        try
+                        {
+                            // PdfTextExtractor may throw or return null on malformed pages/resources.
+                            pageText = PdfTextExtractor.GetTextFromPage(page, strategy) ?? string.Empty;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to extract text from page {Page} of {FileName}. Skipping page.", i, fileName);
+
+                            // Best-effort diagnostic: log page dictionary (may be helpful to debug malformed PDFs)
+                            try
+                            {
+                                var dict = page.GetPdfObject();
+                                _logger.LogDebug("Page {Page} PdfDictionary: {Dict}", i, dict);
+                            }
+                            catch { /* ignore diagnostic failures */ }
+
+                            continue;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(pageText))
+                            text.AppendLine(pageText);
                     }
 
                     var rawText = text.ToString();
@@ -105,7 +149,7 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             var data = new ExtractedCVData
             {
-                RawText = text
+                RawText = text ?? string.Empty
             };
 
             // Extract Student ID
@@ -131,14 +175,16 @@ namespace CVAnalyzer.Infrastructure.Services
 
         private string ExtractStudentId(string text)
         {
-            // Pattern: Student ID, Roll No, ID, etc. followed by number
             var patterns = new[]
             {
-            @"Student\s*ID\s*[:\-]?\s*([A-Z0-9\-]+)",
-            @"Roll\s*No\.?\s*[:\-]?\s*([A-Z0-9\-]+)",
-            @"ID\s*[:\-]?\s*([A-Z0-9]{6,})",
-            @"Enrollment\s*No\.?\s*[:\-]?\s*([A-Z0-9\-]+)"
-        };
+                @"Student\s*ID\s*[:\-]?\s*([A-Z0-9\-]+)",
+                @"Roll\s*No\.?\s*[:\-]?\s*([A-Z0-9\-]+)",
+                @"ID\s*[:\-]?\s*([A-Z0-9]{6,})",
+                @"Enrollment\s*No\.?\s*[:\-]?\s*([A-Z0-9\-]+)"
+            };
+
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
 
             foreach (var pattern in patterns)
             {
@@ -154,23 +200,23 @@ namespace CVAnalyzer.Infrastructure.Services
 
         private string ExtractName(string text)
         {
-            // Typically the name is at the top of the CV
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
+
             var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var line in lines.Take(10))
             {
                 var cleanLine = line.Trim();
 
-                // Skip common headers
                 if (cleanLine.ToLower().Contains("curriculum vitae") ||
                     cleanLine.ToLower().Contains("resume") ||
                     cleanLine.Length < 3)
                     continue;
 
-                // Name is usually 2-4 words, with capital letters
                 var words = cleanLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (words.Length >= 2 && words.Length <= 4 &&
-                    words.All(w => char.IsUpper(w[0])))
+                    words.All(w => !string.IsNullOrEmpty(w) && char.IsUpper(w[0])))
                 {
                     return cleanLine;
                 }
@@ -181,6 +227,9 @@ namespace CVAnalyzer.Infrastructure.Services
 
         private string ExtractEmail(string text)
         {
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
+
             var emailPattern = @"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b";
             var match = Regex.Match(text, emailPattern);
             return match.Success ? match.Value : string.Empty;
@@ -188,12 +237,15 @@ namespace CVAnalyzer.Infrastructure.Services
 
         private string ExtractPhone(string text)
         {
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
+
             var phonePatterns = new[]
             {
-            @"\+?[\d\s\-\(\)]{10,}",
-            @"\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b",
-            @"\b\d{10}\b"
-        };
+                @"\+?[\d\s\-\(\)]{10,}",
+                @"\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b",
+                @"\b\d{10}\b"
+            };
 
             foreach (var pattern in phonePatterns)
             {
@@ -210,14 +262,15 @@ namespace CVAnalyzer.Infrastructure.Services
         private List<string> ExtractSkills(string text)
         {
             var skills = new List<string>();
+            if (string.IsNullOrEmpty(text))
+                return skills;
 
-            // Common skill section headers
             var skillSectionPatterns = new[]
             {
-            @"SKILLS?[\s\n:]+(.+?)(?=\n[A-Z]{3,}|\n\n|$)",
-            @"TECHNICAL\s+SKILLS?[\s\n:]+(.+?)(?=\n[A-Z]{3,}|\n\n|$)",
-            @"CORE\s+COMPETENCIES[\s\n:]+(.+?)(?=\n[A-Z]{3,}|\n\n|$)"
-        };
+                @"SKILLS?[\s\n:]+(.+?)(?=\n[A-Z]{3,}|\n\n|$)",
+                @"TECHNICAL\s+SKILLS?[\s\n:]+(.+?)(?=\n[A-Z]{3,}|\n\n|$)",
+                @"CORE\s+COMPETENCIES[\s\n:]+(.+?)(?=\n[A-Z]{3,}|\n\n|$)"
+            };
 
             string skillSection = string.Empty;
             foreach (var pattern in skillSectionPatterns)
@@ -233,16 +286,15 @@ namespace CVAnalyzer.Infrastructure.Services
             if (string.IsNullOrEmpty(skillSection))
                 skillSection = text;
 
-            // Common programming skills
             var knownSkills = new[]
             {
-            "C#", "Python", "Java", "JavaScript", "TypeScript", "C++", "Ruby", "PHP", "Swift", "Kotlin",
-            "HTML", "CSS", "React", "Angular", "Vue", "Node.js", "Express", "Django", "Flask", "Spring",
-            "ASP.NET", ".NET Core", "Entity Framework", "SQL", "MySQL", "PostgreSQL", "MongoDB", "Redis",
-            "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Git", "Jenkins", "CI/CD", "Agile", "Scrum",
-            "Machine Learning", "AI", "Data Science", "TensorFlow", "PyTorch", "Pandas", "NumPy",
-            "REST API", "GraphQL", "Microservices", "Clean Architecture", "Design Patterns"
-        };
+                "C#", "Python", "Java", "JavaScript", "TypeScript", "C++", "Ruby", "PHP", "Swift", "Kotlin",
+                "HTML", "CSS", "React", "Angular", "Vue", "Node.js", "Express", "Django", "Flask", "Spring",
+                "ASP.NET", ".NET Core", "Entity Framework", "SQL", "MySQL", "PostgreSQL", "MongoDB", "Redis",
+                "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Git", "Jenkins", "CI/CD", "Agile", "Scrum",
+                "Machine Learning", "AI", "Data Science", "TensorFlow", "PyTorch", "Pandas", "NumPy",
+                "REST API", "GraphQL", "Microservices", "Clean Architecture", "Design Patterns"
+            };
 
             foreach (var skill in knownSkills)
             {
@@ -261,8 +313,9 @@ namespace CVAnalyzer.Infrastructure.Services
         private List<ExperienceInfo> ExtractExperiences(string text)
         {
             var experiences = new List<ExperienceInfo>();
+            if (string.IsNullOrEmpty(text))
+                return experiences;
 
-            // Pattern to find experience section
             var expSectionPattern = @"(EXPERIENCE|WORK EXPERIENCE|EMPLOYMENT)[\s\n:]+(.+?)(?=\n[A-Z]{3,}\s*\n|$)";
             var match = Regex.Match(text, expSectionPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
@@ -271,7 +324,6 @@ namespace CVAnalyzer.Infrastructure.Services
 
             var experienceSection = match.Groups[2].Value;
 
-            // Split by company/position patterns
             var expEntries = Regex.Split(experienceSection, @"\n(?=[A-Z][a-z]+.*(?:Inc\.|Ltd\.|Corp\.|Company))", RegexOptions.Multiline);
 
             foreach (var entry in expEntries)
@@ -285,14 +337,11 @@ namespace CVAnalyzer.Infrastructure.Services
 
                 var exp = new ExperienceInfo();
 
-                // First line usually contains company name
                 exp.Company = lines[0].Trim();
 
-                // Second line usually contains position
                 if (lines.Length > 1)
                     exp.Position = lines[1].Trim();
 
-                // Look for dates
                 var datePattern = @"(\d{4})\s*-\s*(\d{4}|Present|Current)";
                 var dateMatch = Regex.Match(entry, datePattern, RegexOptions.IgnoreCase);
 
@@ -317,7 +366,6 @@ namespace CVAnalyzer.Infrastructure.Services
                     }
                 }
 
-                // Remaining lines are description
                 if (lines.Length > 2)
                 {
                     exp.Description = string.Join(" ", lines.Skip(2)).Trim();

@@ -16,6 +16,7 @@ namespace CVAnalyzer.Application.DTOs.Student
         public string Phone { get; set; } = string.Empty;
         public List<string> Skills { get; set; } = new();
         public List<ExperienceDto> Experiences { get; set; } = new();
+        public List<CVDocumentDto> CVDocuments { get; set; } = new();
         public int CVCount { get; set; }
         public DateTime CreatedDate { get; set; }
     }

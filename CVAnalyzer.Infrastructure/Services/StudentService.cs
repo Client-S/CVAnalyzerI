@@ -4,6 +4,7 @@ using CVAnalyzer.Application.Services;
 using CVAnalyzer.Core.Entities;
 using CVAnalyzer.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -42,7 +43,8 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<StudentDto?> GetStudentByIdAsync(int id)
         {
-            var student = await _unitOfWork.Students.GetByIdAsync(id);
+            var student = await _unitOfWork.Students.GetByIdWithDetailsAsync(id);
+
             return student == null ? null : MapToDto(student);
         }
 
@@ -114,10 +116,25 @@ namespace CVAnalyzer.Infrastructure.Services
 
         public async Task<IEnumerable<StudentDto>> SearchStudentsAsync(string searchTerm)
         {
-            var students = await _unitOfWork.Students.FindAsync(s =>
-                s.StudentId.Contains(searchTerm) ||
-                s.Name.Contains(searchTerm) ||
-                s.Email.Contains(searchTerm));
+            // Load students with all related entities to prevent N+1 queries
+
+            var students = await _unitOfWork.Students.FindAsync(
+
+                s => s.StudentId.Contains(searchTerm) ||
+
+                     s.Name.Contains(searchTerm) ||
+
+                     s.Email.Contains(searchTerm),
+
+                include: q => q
+
+                    .Include(s => s.StudentSkills)
+
+                        .ThenInclude(ss => ss.Skill)
+
+                    .Include(s => s.Experiences)
+
+                    .Include(s => s.CVDocuments));
 
             return students.Select(s => MapToDto(s)).ToList();
         }
@@ -147,6 +164,31 @@ namespace CVAnalyzer.Infrastructure.Services
                     StartDate = e.StartDate,
                     EndDate = e.EndDate,
                     IsCurrent = e.IsCurrent
+                }).ToList(),
+                CVDocuments = student.CVDocuments.Select(cv => new CVDocumentDto
+
+                {
+
+                    Id = cv.Id,
+
+                    StudentId = student.StudentId,
+
+                    StudentName = student.Name,
+
+                    FileName = cv.FileName,
+
+                    FileType = cv.FileType,
+
+                    FileSize = cv.FileSize,
+
+                    ProcessingStatus = cv.ProcessingStatus,
+
+                    UploadDate = cv.UploadDate,
+
+                    ProcessedDate = cv.ProcessedDate,
+
+                    ErrorMessage = cv.ErrorMessage
+
                 }).ToList(),
                 CVCount = student.CVDocuments.Count,
                 CreatedDate = student.CreatedDate

@@ -4,8 +4,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
     alerts.forEach(alert => {
         setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
+            try {
+                // Check if alert still exists in DOM and hasn't been manually dismissed
+                if (alert && document.body.contains(alert) && !alert.classList.contains('disposing')) {
+                    alert.classList.add('disposing'); // Prevent multiple dismissals
+                    const bsAlert = bootstrap.Alert.getInstance(alert) || new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            } catch (error) {
+                // Silently handle if alert was already removed
+                console.debug('Alert auto-dismiss error (expected if manually closed):', error);
+            }
         }, 5000);
     });
 });

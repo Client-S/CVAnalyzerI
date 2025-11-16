@@ -1,14 +1,9 @@
-﻿using CVAnalyzer.Application.Services;
+﻿using ClosedXML.Excel;
+using CVAnalyzer.Application.Services;
+using CVAnalyzer.Core.Entities;
 using CVAnalyzer.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CVAnalyzer.Infrastructure.Services
 {
@@ -21,70 +16,101 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+        }
 
-            // Set EPPlus license context
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        public async Task<byte[]> GenerateReportAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Starting complete report generation");
+
+                // Load students with all related entities for export
+                var students = (await _unitOfWork.Students.FindAsync(
+                    s => true,
+                    include: q => q
+                        .Include(s => s.StudentSkills)
+                            .ThenInclude(ss => ss.Skill)
+                        .Include(s => s.Experiences)
+                        .Include(s => s.CVDocuments))).ToList();
+
+                _logger.LogInformation("Loaded {Count} students for export", students.Count);
+
+                // Load clusters with all related entities for export
+                var clusters = (await _unitOfWork.Clusters.FindAsync(
+                    c => true,
+                    include: q => q
+                        .Include(c => c.Members)
+                            .ThenInclude(m => m.Student)
+                                .ThenInclude(s => s.StudentSkills)
+                                    .ThenInclude(ss => ss.Skill))).ToList();
+
+                _logger.LogInformation("Loaded {Count} clusters for export", clusters.Count);
+
+                // Create workbook and populate it
+                using (var wb = new XLWorkbook())
+                {
+                    // Students worksheet
+                    var wsStudents = wb.Worksheets.Add("Students");
+                    CreateStudentsSheet(wsStudents, students);
+
+                    // Clusters worksheet
+                    var wsClusters = wb.Worksheets.Add("Clusters");
+                    CreateClustersSheet(wsClusters, clusters);
+
+                    // Save to memory stream and return bytes
+                    using (var ms = new MemoryStream())
+                    {
+                        wb.SaveAs(ms);
+                        ms.Flush();
+                        var result = ms.ToArray();
+                        _logger.LogInformation("Report generated successfully. File size: {Size} bytes", result.Length);
+                        return result;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating Excel report. Error: {ErrorMessage}", ex.Message);
+                throw new InvalidOperationException($"Failed to generate report: {ex.Message}", ex);
+            }
         }
 
         public async Task<byte[]> ExportStudentsToExcelAsync()
         {
             try
             {
-                var students = (await _unitOfWork.Students.GetStudentsWithSkillsAsync()).ToList();
+                _logger.LogInformation("Starting student export");
 
-                using var package = new ExcelPackage();
-                var worksheet = package.Workbook.Worksheets.Add("Students");
+                // Load students with all related entities for export
+                var students = (await _unitOfWork.Students.FindAsync(
+                    s => true,
+                    include: q => q
+                        .Include(s => s.StudentSkills)
+                            .ThenInclude(ss => ss.Skill)
+                        .Include(s => s.Experiences)
+                        .Include(s => s.CVDocuments))).ToList();
 
-                // Headers
-                worksheet.Cells[1, 1].Value = "Student ID";
-                worksheet.Cells[1, 2].Value = "Name";
-                worksheet.Cells[1, 3].Value = "Email";
-                worksheet.Cells[1, 4].Value = "Phone";
-                worksheet.Cells[1, 5].Value = "Skills";
-                worksheet.Cells[1, 6].Value = "Experience Count";
-                worksheet.Cells[1, 7].Value = "CV Count";
-                worksheet.Cells[1, 8].Value = "Created Date";
+                _logger.LogInformation("Loaded {Count} students for export", students.Count);
 
-                // Style headers
-                using (var range = worksheet.Cells[1, 1, 1, 8])
+                using (var wb = new XLWorkbook())
                 {
-                    range.Style.Font.Bold = true;
-                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    range.Style.Fill.BackgroundColor.SetColor(Color.LightBlue);
-                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    var ws = wb.Worksheets.Add("Students");
+                    CreateStudentsSheet(ws, students);
+
+                    using (var ms = new MemoryStream())
+                    {
+                        wb.SaveAs(ms);
+                        ms.Flush();
+                        var result = ms.ToArray();
+                        _logger.LogInformation("Student export completed successfully. File size: {Size} bytes", result.Length);
+                        return result;
+                    }
                 }
-
-                // Data
-                int row = 2;
-                foreach (var student in students)
-                {
-                    worksheet.Cells[row, 1].Value = student.StudentId;
-                    worksheet.Cells[row, 2].Value = student.Name;
-                    worksheet.Cells[row, 3].Value = student.Email;
-                    worksheet.Cells[row, 4].Value = student.Phone;
-                    worksheet.Cells[row, 5].Value = string.Join(", ",
-                        student.StudentSkills.Select(ss => ss.Skill.SkillName));
-                    worksheet.Cells[row, 6].Value = student.Experiences.Count;
-                    worksheet.Cells[row, 7].Value = student.CVDocuments.Count;
-                    worksheet.Cells[row, 8].Value = student.CreatedDate.ToString("yyyy-MM-dd");
-                    row++;
-                }
-
-                // Auto-fit columns
-                worksheet.Cells.AutoFitColumns();
-
-                // Add summary
-                row += 2;
-                worksheet.Cells[row, 1].Value = "Total Students:";
-                worksheet.Cells[row, 2].Value = students.Count;
-                worksheet.Cells[row, 1, row, 2].Style.Font.Bold = true;
-
-                return package.GetAsByteArray();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error exporting students to Excel");
-                throw;
+                _logger.LogError(ex, "Error exporting students to Excel. Error: {ErrorMessage}", ex.Message);
+                throw new InvalidOperationException($"Failed to export students: {ex.Message}", ex);
             }
         }
 
@@ -92,64 +118,106 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
-                var cluster = await _unitOfWork.Clusters.GetByIdAsync(clusterId);
+                _logger.LogInformation("Starting cluster export for ClusterId: {ClusterId}", clusterId);
+
+                // Load cluster with all related entities for export
+                var clusterData = await _unitOfWork.Clusters.FindAsync(
+                    c => c.Id == clusterId,
+                    include: q => q
+                        .Include(c => c.Members)
+                            .ThenInclude(m => m.Student)
+                                .ThenInclude(s => s.StudentSkills)
+                                    .ThenInclude(ss => ss.Skill));
+
+                var cluster = clusterData.FirstOrDefault();
                 if (cluster == null)
-                    throw new InvalidOperationException("Cluster not found");
-
-                using var package = new ExcelPackage();
-                var worksheet = package.Workbook.Worksheets.Add(cluster.ClusterName);
-
-                // Title
-                worksheet.Cells[1, 1].Value = $"Cluster: {cluster.ClusterName}";
-                worksheet.Cells[1, 1, 1, 6].Merge = true;
-                worksheet.Cells[1, 1].Style.Font.Size = 16;
-                worksheet.Cells[1, 1].Style.Font.Bold = true;
-                worksheet.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
-                worksheet.Cells[2, 1].Value = $"Created: {cluster.CreatedDate:yyyy-MM-dd}";
-                worksheet.Cells[2, 1, 2, 6].Merge = true;
-                worksheet.Cells[2, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
-                // Headers
-                int headerRow = 4;
-                worksheet.Cells[headerRow, 1].Value = "Student ID";
-                worksheet.Cells[headerRow, 2].Value = "Name";
-                worksheet.Cells[headerRow, 3].Value = "Email";
-                worksheet.Cells[headerRow, 4].Value = "Skills";
-                worksheet.Cells[headerRow, 5].Value = "Similarity Score";
-                worksheet.Cells[headerRow, 6].Value = "Matching Skills";
-
-                // Style headers
-                using (var range = worksheet.Cells[headerRow, 1, headerRow, 6])
                 {
-                    range.Style.Font.Bold = true;
-                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    range.Style.Fill.BackgroundColor.SetColor(Color.LightGreen);
-                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    _logger.LogWarning("Cluster with ID {ClusterId} not found", clusterId);
+                    throw new ArgumentException($"Cluster with ID {clusterId} not found");
                 }
 
-                // Data
-                int row = headerRow + 1;
-                foreach (var member in cluster.Members)
+                _logger.LogInformation("Cluster found: {ClusterName} with {MemberCount} members",
+                    cluster.ClusterName, cluster.Members?.Count ?? 0);
+
+                using (var wb = new XLWorkbook())
                 {
-                    worksheet.Cells[row, 1].Value = member.Student.StudentId;
-                    worksheet.Cells[row, 2].Value = member.Student.Name;
-                    worksheet.Cells[row, 3].Value = member.Student.Email;
-                    worksheet.Cells[row, 4].Value = member.Student.StudentSkills.Count;
-                    worksheet.Cells[row, 5].Value = member.SimilarityScore.ToString("F2");
-                    worksheet.Cells[row, 6].Value = member.MatchingSkills;
-                    row++;
+                    var ws = wb.Worksheets.Add("Cluster Details");
+
+                    // Header information
+                    ws.Cell(1, 1).Value = "Cluster Information";
+                    ws.Cell(1, 1).Style.Font.Bold = true;
+                    ws.Cell(1, 1).Style.Font.FontSize = 14;
+
+                    ws.Cell(2, 1).Value = "Cluster Name";
+                    ws.Cell(2, 2).Value = cluster.ClusterName;
+
+                    ws.Cell(3, 1).Value = "Algorithm";
+                    ws.Cell(3, 2).Value = cluster.Algorithm;
+
+                    ws.Cell(4, 1).Value = "Member Count";
+                    ws.Cell(4, 2).Value = cluster.MemberCount;
+
+                    ws.Cell(5, 1).Value = "Created Date";
+                    ws.Cell(5, 2).Value = cluster.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss");
+
+                    // Members section
+                    ws.Cell(7, 1).Value = "Cluster Members";
+                    ws.Cell(7, 1).Style.Font.Bold = true;
+
+                    var headerRow = 8;
+                    ws.Cell(headerRow, 1).Value = "Student ID";
+                    ws.Cell(headerRow, 2).Value = "Student Name";
+                    ws.Cell(headerRow, 3).Value = "Email";
+                    ws.Cell(headerRow, 4).Value = "Similarity Score";
+                    ws.Cell(headerRow, 5).Value = "Matching Skills";
+
+                    var headerRange = ws.Range(headerRow, 1, headerRow, 5);
+                    headerRange.Style.Font.Bold = true;
+                    headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
+
+                    if (cluster.Members != null && cluster.Members.Any())
+                    {
+                        _logger.LogInformation("Processing {Count} cluster members", cluster.Members.Count);
+
+                        for (int i = 0; i < cluster.Members.Count; i++)
+                        {
+                            var row = headerRow + i + 1;
+                            var member = cluster.Members.ElementAt(i);
+
+                            ws.Cell(row, 1).Value = member.Student?.StudentId ?? string.Empty;
+                            ws.Cell(row, 2).Value = member.Student?.Name ?? string.Empty;
+                            ws.Cell(row, 3).Value = member.Student?.Email ?? string.Empty;
+                            ws.Cell(row, 4).Value = member.SimilarityScore;
+                            ws.Cell(row, 5).Value = member.MatchingSkills ?? string.Empty;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Cluster has no members to export");
+                    }
+
+                    ws.Columns().AdjustToContents();
+
+                    _logger.LogInformation("Saving workbook to memory stream");
+                    using (var ms = new MemoryStream())
+                    {
+                        wb.SaveAs(ms);
+                        ms.Flush();
+                        var result = ms.ToArray();
+                        _logger.LogInformation("Cluster export completed successfully. File size: {Size} bytes", result.Length);
+                        return result;
+                    }
                 }
-
-                // Auto-fit columns
-                worksheet.Cells.AutoFitColumns();
-
-                return package.GetAsByteArray();
+            }
+            catch (ArgumentException)
+            {
+                throw; // Re-throw cluster not found exception
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error exporting cluster to Excel");
-                throw;
+                _logger.LogError(ex, "Error exporting cluster {ClusterId} to Excel. Error: {ErrorMessage}",
+                    clusterId, ex.Message);
+                throw new InvalidOperationException($"Failed to export cluster {clusterId}: {ex.Message}", ex);
             }
         }
 
@@ -157,84 +225,177 @@ namespace CVAnalyzer.Infrastructure.Services
         {
             try
             {
-                var skills = (await _unitOfWork.Skills.GetAllAsync()).ToList();
-                var students = (await _unitOfWork.Students.GetStudentsWithSkillsAsync()).ToList();
+                _logger.LogInformation("Starting skills report export");
 
-                using var package = new ExcelPackage();
+                // Load students with skills for the report
+                var students = (await _unitOfWork.Students.FindAsync(
+                    s => true,
+                    include: q => q
+                        .Include(s => s.StudentSkills)
+                            .ThenInclude(ss => ss.Skill))).ToList();
 
-                // Sheet 1: Skills Summary
-                var skillsSheet = package.Workbook.Worksheets.Add("Skills Summary");
+                _logger.LogInformation("Loaded {Count} students for skills report", students.Count);
 
-                skillsSheet.Cells[1, 1].Value = "Skill Name";
-                skillsSheet.Cells[1, 2].Value = "Category";
-                skillsSheet.Cells[1, 3].Value = "Student Count";
-                skillsSheet.Cells[1, 4].Value = "Percentage";
-
-                using (var range = skillsSheet.Cells[1, 1, 1, 4])
+                using (var wb = new XLWorkbook())
                 {
-                    range.Style.Font.Bold = true;
-                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    range.Style.Fill.BackgroundColor.SetColor(Color.LightCoral);
-                }
+                    var ws = wb.Worksheets.Add("Skills Report");
 
-                int row = 2;
-                foreach (var skill in skills.OrderByDescending(s =>
-                    students.Count(st => st.StudentSkills.Any(ss => ss.SkillId == s.Id))))
-                {
-                    var studentCount = students.Count(st => st.StudentSkills.Any(ss => ss.SkillId == skill.Id));
-                    var percentage = students.Count > 0 ? (double)studentCount / students.Count * 100 : 0;
+                    // Header
+                    ws.Cell(1, 1).Value = "Skill";
+                    ws.Cell(1, 2).Value = "Student Count";
+                    ws.Cell(1, 3).Value = "Students";
 
-                    skillsSheet.Cells[row, 1].Value = skill.SkillName;
-                    skillsSheet.Cells[row, 2].Value = skill.Category;
-                    skillsSheet.Cells[row, 3].Value = studentCount;
-                    skillsSheet.Cells[row, 4].Value = $"{percentage:F1}%";
-                    row++;
-                }
+                    var headerRange = ws.Range(1, 1, 1, 3);
+                    headerRange.Style.Font.Bold = true;
+                    headerRange.Style.Fill.BackgroundColor = XLColor.LightYellow;
 
-                skillsSheet.Cells.AutoFitColumns();
+                    // Group skills and count occurrences
+                    var skillGroups = students
+                        .Where(s => s.StudentSkills != null && s.StudentSkills.Any())
+                        .SelectMany(s => s.StudentSkills.Select(ss => new { ss.Skill?.SkillName, s.Name, s.StudentId }))
+                        .Where(x => !string.IsNullOrEmpty(x.SkillName))
+                        .GroupBy(x => x.SkillName)
+                        .OrderByDescending(g => g.Count())
+                        .ToList();
 
-                // Sheet 2: Top Skills
-                var topSkillsSheet = package.Workbook.Worksheets.Add("Top 10 Skills");
+                    _logger.LogInformation("Processing {Count} skill groups", skillGroups.Count);
 
-                topSkillsSheet.Cells[1, 1].Value = "Rank";
-                topSkillsSheet.Cells[1, 2].Value = "Skill";
-                topSkillsSheet.Cells[1, 3].Value = "Students";
-
-                using (var range = topSkillsSheet.Cells[1, 1, 1, 3])
-                {
-                    range.Style.Font.Bold = true;
-                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    range.Style.Fill.BackgroundColor.SetColor(Color.Gold);
-                }
-
-                var topSkills = skills
-                    .Select(s => new
+                    for (int i = 0; i < skillGroups.Count; i++)
                     {
-                        Skill = s,
-                        Count = students.Count(st => st.StudentSkills.Any(ss => ss.SkillId == s.Id))
-                    })
-                    .OrderByDescending(x => x.Count)
-                    .Take(10)
-                    .ToList();
+                        var row = i + 2;
+                        var group = skillGroups[i];
 
-                row = 2;
-                int rank = 1;
-                foreach (var item in topSkills)
-                {
-                    topSkillsSheet.Cells[row, 1].Value = rank++;
-                    topSkillsSheet.Cells[row, 2].Value = item.Skill.SkillName;
-                    topSkillsSheet.Cells[row, 3].Value = item.Count;
-                    row++;
+                        ws.Cell(row, 1).Value = group.Key;
+                        ws.Cell(row, 2).Value = group.Count();
+                        ws.Cell(row, 3).Value = string.Join(", ", group.Select(x => $"{x.StudentId} - {x.Name}"));
+                    }
+
+                    ws.Columns().AdjustToContents();
+
+                    using (var ms = new MemoryStream())
+                    {
+                        wb.SaveAs(ms);
+                        ms.Flush();
+                        var result = ms.ToArray();
+                        _logger.LogInformation("Skills report export completed successfully. File size: {Size} bytes", result.Length);
+                        return result;
+                    }
                 }
-
-                topSkillsSheet.Cells.AutoFitColumns();
-
-                return package.GetAsByteArray();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error exporting skills report");
-                throw;
+                _logger.LogError(ex, "Error exporting skills report. Error: {ErrorMessage}", ex.Message);
+                throw new InvalidOperationException($"Failed to export skills report: {ex.Message}", ex);
+            }
+        }
+
+        private void CreateStudentsSheet(IXLWorksheet ws, List<Student> students)
+        {
+            // Create header row with formatting
+            ws.Cell(1, 1).Value = "Student ID";
+            ws.Cell(1, 2).Value = "Name";
+            ws.Cell(1, 3).Value = "Email";
+            ws.Cell(1, 4).Value = "Phone";
+            ws.Cell(1, 5).Value = "Skills";
+            ws.Cell(1, 6).Value = "Experience Count";
+
+            // Format header
+            var headerRange = ws.Range(1, 1, 1, 6);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
+
+            // Populate data rows
+            for (int i = 0; i < students.Count; i++)
+            {
+                var row = i + 2;
+                var student = students[i];
+
+                ws.Cell(row, 1).Value = student.StudentId ?? string.Empty;
+                ws.Cell(row, 2).Value = student.Name ?? string.Empty;
+                ws.Cell(row, 3).Value = student.Email ?? string.Empty;
+                ws.Cell(row, 4).Value = student.Phone ?? string.Empty;
+
+                // Extract unique skills
+                var skills = student.StudentSkills != null && student.StudentSkills.Any()
+                    ? string.Join(", ", student.StudentSkills.Select(ss => ss.Skill?.SkillName ?? string.Empty).Where(s => !string.IsNullOrEmpty(s)).Distinct())
+                    : string.Empty;
+                ws.Cell(row, 5).Value = skills;
+
+                // Experience count
+                ws.Cell(row, 6).Value = student.Experiences?.Count ?? 0;
+            }
+
+            // Auto-fit columns
+            ws.Columns().AdjustToContents();
+        }
+
+        private void CreateClustersSheet(IXLWorksheet ws, List<StudentCluster> clusters)
+        {
+            // Create header row with formatting
+            ws.Cell(1, 1).Value = "Cluster Name";
+            ws.Cell(1, 2).Value = "Algorithm";
+            ws.Cell(1, 3).Value = "Member Count";
+            ws.Cell(1, 4).Value = "Members (StudentId - Name)";
+            ws.Cell(1, 5).Value = "Common Skills";
+            ws.Cell(1, 6).Value = "Created Date";
+
+            // Format header
+            var headerRange = ws.Range(1, 1, 1, 6);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGreen;
+
+            // Populate data rows
+            for (int i = 0; i < clusters.Count; i++)
+            {
+                var row = i + 2;
+                var cluster = clusters[i];
+
+                ws.Cell(row, 1).Value = cluster.ClusterName ?? string.Empty;
+                ws.Cell(row, 2).Value = cluster.Algorithm ?? string.Empty;
+                ws.Cell(row, 3).Value = cluster.MemberCount;
+
+                // Members list
+                var members = cluster.Members != null && cluster.Members.Any()
+                    ? string.Join("; ", cluster.Members.Select(m => $"{m.Student?.StudentId ?? "N/A"} - {m.Student?.Name ?? "N/A"}"))
+                    : string.Empty;
+                ws.Cell(row, 4).Value = members;
+
+                // Common skills (deduplicated and top 5)
+                var commonSkills = ExtractCommonSkills(cluster.Members);
+                ws.Cell(row, 5).Value = commonSkills;
+
+                // Created date
+                ws.Cell(row, 6).Value = cluster.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+
+            // Auto-fit columns
+            ws.Columns().AdjustToContents();
+        }
+
+        private string ExtractCommonSkills(ICollection<ClusterMember> members)
+        {
+            if (members == null || !members.Any())
+                return string.Empty;
+
+            try
+            {
+                var skills = members
+                    .Where(m => !string.IsNullOrEmpty(m.MatchingSkills))
+                    .SelectMany(m => m.MatchingSkills.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                    .Select(s => s.Trim())
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .GroupBy(s => s)
+                    .OrderByDescending(g => g.Count())
+                    .Select(g => g.Key)
+                    .Take(5)
+                    .ToList();
+
+                return string.Join(", ", skills);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error extracting common skills");
+                return string.Empty;
             }
         }
     }

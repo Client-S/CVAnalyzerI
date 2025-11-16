@@ -152,7 +152,11 @@ namespace CVAnalyzer.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("EntityId");
+
                     b.HasIndex("Timestamp");
+
+                    b.HasIndex("EntityType", "EntityId");
 
                     b.HasIndex("UserId", "Timestamp");
 
@@ -213,6 +217,10 @@ namespace CVAnalyzer.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
+                    b.HasIndex("UploadDate");
+
+                    b.HasIndex("StudentId", "UploadDate");
+
                     b.ToTable("CVDocuments");
                 });
 
@@ -238,6 +246,8 @@ namespace CVAnalyzer.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClusterId");
 
                     b.HasIndex("StudentId");
 
@@ -321,8 +331,12 @@ namespace CVAnalyzer.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Category");
+
                     b.HasIndex("NormalizedName")
                         .IsUnique();
+
+                    b.HasIndex("SkillName");
 
                     b.ToTable("Skills");
                 });
@@ -410,7 +424,9 @@ namespace CVAnalyzer.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreatedDate");
+
+                    b.HasIndex("CreatedByUserId", "CreatedDate");
 
                     b.ToTable("StudentClusters");
                 });
@@ -445,6 +461,8 @@ namespace CVAnalyzer.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("SkillId");
+
+                    b.HasIndex("StudentId");
 
                     b.HasIndex("StudentId", "SkillId");
 

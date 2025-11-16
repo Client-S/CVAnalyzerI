@@ -8,6 +8,7 @@ namespace CVAnalyzer.Application.Services
 {
     public interface IExportService
     {
+        Task<byte[]> GenerateReportAsync();
         Task<byte[]> ExportStudentsToExcelAsync();
         Task<byte[]> ExportClusterToExcelAsync(int clusterId);
         Task<byte[]> ExportSkillsReportAsync();

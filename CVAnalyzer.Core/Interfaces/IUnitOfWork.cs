@@ -15,6 +15,8 @@ namespace CVAnalyzer.Core.Interfaces
         IRepository<CVDocument> CVDocuments { get; }
         IRepository<StudentCluster> Clusters { get; }
         IRepository<AuditLog> AuditLogs { get; }
+        IRepository<StudentSkill> StudentSkills { get; }
+        IRepository<ClusterMember> ClusterMembers { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();

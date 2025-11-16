@@ -62,6 +62,59 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CVAnalyzer.Web.Controllers.ClusterJobsController",
+    "Method": "GetStatus",
+    "RelativePath": "api/ClusterJobs/{jobId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "jobId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CVAnalyzer.Web.Controllers.ClusterJobsController",
+    "Method": "EnqueueDBSCAN",
+    "RelativePath": "api/ClusterJobs/dbscan",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "eps",
+        "Type": "System.Double",
+        "IsRequired": false
+      },
+      {
+        "Name": "minPts",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CVAnalyzer.Web.Controllers.ClusterJobsController",
+    "Method": "EnqueueKMeans",
+    "RelativePath": "api/ClusterJobs/kmeans",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "k",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CVAnalyzer.Web.Controllers.UserManagementController",
     "Method": "GetAllUsers",
     "RelativePath": "api/UserManagement",

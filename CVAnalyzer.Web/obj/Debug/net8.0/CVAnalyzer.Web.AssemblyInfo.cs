@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CVAnalyzer.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f91fca78a0d8b61b87f600b4831dfc7846108487")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1b580daec6c86d00f7e3765d65369da0711eb739")]
 [assembly: System.Reflection.AssemblyProductAttribute("CVAnalyzer.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CVAnalyzer.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

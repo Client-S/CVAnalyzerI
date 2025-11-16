@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using CVAnalyzer.Web.Middleware;
+using System.Threading.RateLimiting;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,6 +72,11 @@ builder.Services.AddAuthentication(options =>
 });
 
 
+builder.Services.AddHostedService<ClusteringBackgroundService>();
+builder.Services.AddSingleton<CVAnalyzer.Infrastructure.Queue.IBackgroundTaskQueue, CVAnalyzer.Infrastructure.Queue.BackgroundTaskQueue>();
+builder.Services.AddScoped<IClusteringJobService, ClusteringJobService>();
+builder.Services.AddHostedService<QueuedHostedService>();
+
 // Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
@@ -118,10 +126,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
-// Add Blazor Server (if using Blazor)
-// builder.Services.AddServerSideBlazor();
-
-// CORS Configuration (if needed for API)
+// CORS Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -140,6 +145,20 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// Add Rate Limiter BEFORE building the app
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.User.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+});
+
+// NOW build the app - only once
 var app = builder.Build();
 
 // Initialize Database and Seed Data
@@ -177,15 +196,15 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseRateLimiter();
+
 app.UseSession();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapRazorPages();
-
-// Map Blazor Hub (if using Blazor)
-// app.MapBlazorHub();
 
 app.Run();
