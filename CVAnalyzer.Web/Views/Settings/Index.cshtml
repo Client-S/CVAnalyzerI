@@ -1,0 +1,155 @@
+@model CVAnalyzer.Web.Controllers.SettingsViewModel
+
+@{
+    ViewData["Title"] = "System Settings";
+}
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-sliders-h"></i> System Settings</h2>
+        <p class="text-muted">Configure application settings and preferences</p>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> <strong>Note:</strong> Some settings may require application restart to take effect.
+    Current settings are read from configuration files.
+</div>
+
+<form method="post" asp-action="Index">
+    @Html.AntiForgeryToken()
+
+    <div class="row">
+        <!-- General Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-cog"></i> General Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="ApplicationName" class="form-label">Application Name</label>
+                        <input asp-for="ApplicationName" class="form-control" readonly />
+                        <small class="form-text text-muted">The display name of the application</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SessionTimeoutMinutes" class="form-label">Session Timeout (Minutes)</label>
+                        <input asp-for="SessionTimeoutMinutes" type="number" class="form-control" min="5" max="480" readonly />
+                        <small class="form-text text-muted">How long users stay logged in without activity</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-upload"></i> File Upload Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="MaxUploadSizeMB" class="form-label">Maximum Upload Size (MB)</label>
+                        <input asp-for="MaxUploadSizeMB" type="number" class="form-control" min="1" max="100" readonly />
+                        <small class="form-text text-muted">Maximum file size allowed for CV uploads</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="AllowedFileExtensions" class="form-label">Allowed File Extensions</label>
+                        <input asp-for="AllowedFileExtensions" class="form-control" readonly />
+                        <small class="form-text text-muted">Comma-separated list of allowed file types</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-shield-alt"></i> Security Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3 form-check">
+                        <input asp-for="EnableAuditLogging" type="checkbox" class="form-check-input" disabled />
+                        <label asp-for="EnableAuditLogging" class="form-check-label">Enable Audit Logging</label>
+                        <small class="form-text text-muted d-block">Track all user actions in the system</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="MaxLoginAttempts" class="form-label">Maximum Login Attempts</label>
+                        <input asp-for="MaxLoginAttempts" type="number" class="form-control" min="3" max="10" readonly />
+                        <small class="form-text text-muted">Account locks after this many failed login attempts</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PasswordExpiryDays" class="form-label">Password Expiry (Days)</label>
+                        <input asp-for="PasswordExpiryDays" type="number" class="form-control" min="30" max="365" readonly />
+                        <small class="form-text text-muted">Users must change password after this many days</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Information -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> System Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Application Version:</strong>
+                        <p class="text-muted">1.0.0</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Framework:</strong>
+                        <p class="text-muted">ASP.NET Core</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Environment:</strong>
+                        <p class="text-muted">
+                            @{
+                                var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+                            }
+                            <span class="badge @(env == "Development" ? "bg-warning" : "bg-success")">@env</span>
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Server Time:</strong>
+                        <p class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy HH:mm:ss")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i> <strong>Read-Only Mode:</strong>
+        Settings are currently read from configuration files and cannot be modified through the UI.
+        To change these settings, please update the <code>appsettings.json</code> file and restart the application.
+    </div>
+
+    <!--
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Settings
+            </button>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </div>
+    -->
+</form>
+
+@section Scripts {
+    <script>
+        // Add any client-side validation or interactivity here
+    </script>
+}

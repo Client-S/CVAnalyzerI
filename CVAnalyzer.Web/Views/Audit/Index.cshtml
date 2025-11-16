@@ -1,0 +1,195 @@
+@model IEnumerable<CVAnalyzer.Application.DTOs.Audit.AuditLogDto>
+
+@{
+    ViewData["Title"] = "Audit Logs";
+}
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-history"></i> Audit Logs</h2>
+        <p class="text-muted">View system activity and user actions</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="fas fa-filter"></i> Filters</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-3">
+            <div class="col-md-3">
+                <label for="action" class="form-label">Action</label>
+                <select class="form-select" id="action" name="action">
+                    <option value="">All Actions</option>
+                    <option value="Upload" @(ViewBag.Action == "Upload" ? "selected" : "")>Upload</option>
+                    <option value="Delete" @(ViewBag.Action == "Delete" ? "selected" : "")>Delete</option>
+                    <option value="View" @(ViewBag.Action == "View" ? "selected" : "")>View</option>
+                    <option value="Export" @(ViewBag.Action == "Export" ? "selected" : "")>Export</option>
+                    <option value="Login" @(ViewBag.Action == "Login" ? "selected" : "")>Login</option>
+                    <option value="Logout" @(ViewBag.Action == "Logout" ? "selected" : "")>Logout</option>
+                    <option value="Create" @(ViewBag.Action == "Create" ? "selected" : "")>Create</option>
+                    <option value="Update" @(ViewBag.Action == "Update" ? "selected" : "")>Update</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="startDate" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="startDate" name="startDate"
+                       value="@(ViewBag.StartDate != null ? ((DateTime)ViewBag.StartDate).ToString("yyyy-MM-dd") : "")">
+            </div>
+            <div class="col-md-3">
+                <label for="endDate" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="endDate" name="endDate"
+                       value="@(ViewBag.EndDate != null ? ((DateTime)ViewBag.EndDate).ToString("yyyy-MM-dd") : "")">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search"></i> Apply Filters
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Audit Logs Table -->
+<div class="card shadow-sm">
+    <div class="card-body">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover table-sm" id="auditLogsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Entity Type</th>
+                            <th>Entity ID</th>
+                            <th>IP Address</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <small class="text-nowrap">
+                                        @log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")
+                                    </small>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@log.UserName</strong>
+                                    </div>
+                                    <small class="text-muted">@log.UserEmail</small>
+                                </td>
+                                <td>
+                                    @{
+                                        var badgeClass = log.Action switch
+                                        {
+                                            "Upload" => "bg-success",
+                                            "Delete" => "bg-danger",
+                                            "View" => "bg-info",
+                                            "Export" => "bg-primary",
+                                            "Login" => "bg-success",
+                                            "Logout" => "bg-secondary",
+                                            "Create" => "bg-success",
+                                            "Update" => "bg-warning",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@log.Action</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">@log.EntityType</span>
+                                </td>
+                                <td>
+                                    <small class="font-monospace">@log.EntityId</small>
+                                </td>
+                                <td>
+                                    <small class="text-muted">@log.IpAddress</small>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(log.Details))
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#detailsModal-@log.Id">
+                                            <i class="fas fa-info-circle"></i> View
+                                        </button>
+
+                                        <!-- Details Modal -->
+                                        <div class="modal fade" id="detailsModal-@log.Id" tabindex="-1">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Audit Log Details</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <strong>Timestamp:</strong> @log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <strong>User:</strong> @log.UserName (@log.UserEmail)
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <strong>Action:</strong> @log.Action
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <strong>Entity:</strong> @log.EntityType - @log.EntityId
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <strong>Details:</strong>
+                                                            <pre class="bg-light p-3 rounded"><code>@log.Details</code></pre>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No audit logs found matching the selected criteria.
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#auditLogsTable').DataTable({
+                responsive: true,
+                order: [[0, 'desc']],
+                pageLength: 50,
+                lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                columnDefs: [
+                    { orderable: false, targets: [6] }
+                ]
+            });
+        });
+    </script>
+}
