@@ -52,6 +52,9 @@ secrets.json
 *.db
 *.sqlite
 
+# User uploaded files (CVs contain personal data)
+**/wwwroot/uploads/
+
 # Generated / tooling / IDE helper files
 # Exclude Razor generated files and other generated C# files that should not be committed
 **/*.cshtml.g.cs
